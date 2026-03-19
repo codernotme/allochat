@@ -13,10 +13,10 @@
 ## Phase 1 — Foundation & Infrastructure
 
 ### Dependencies & Setup
-- [ ] Install all npm packages (auth, convex, ui, etc.)
-- [ ] Initialize Convex project (`convex init`)
-- [ ] Set up `.env.local` with Convex URL
-- [ ] Configure Convex Auth providers (email, OAuth)
+- [x] Install all npm packages (auth, convex, ui, etc.)
+- [x] Initialize Convex project (`convex init`)
+- [x] Set up `.env.local` with Convex URL
+- [x] Configure Convex Auth providers (email, OAuth)
 - [ ] Set up Cloudinary account + API keys
 - [ ] Set up LiveKit account + tokens
 - [ ] Set up Stripe account (test mode)
@@ -37,25 +37,25 @@
 - [ ] Test schema deployment to Convex
 
 ### Configuration Files
-- [ ] Create `lib/data/room-categories.ts`
-- [ ] Create `lib/data/subscription-plans.ts`
-- [ ] Create `lib/data/permissions.ts`
-- [ ] Create `lib/data/roles.ts`
-- [ ] Create `lib/data/badge-definitions.ts`
-- [ ] Create `lib/data/nav-items.ts`
+- [x] Create `lib/data/room-categories.ts`
+- [x] Create `lib/data/subscription-plans.ts`
+- [x] Create `lib/data/permissions.ts`
+- [x] Create `lib/data/roles.ts`
+- [x] Create `lib/data/badge-definitions.ts`
+- [x] Create `lib/data/nav-items.ts`
 - [ ] Create `lib/i18n/config.ts` + language files
-- [ ] Create `convex.json` (deployment config)
-- [ ] Create `.gitignore` (exclude `.env.local`, etc.)
+- [x] Create `convex.json`
+- [x] Create `.gitignore` (exclude `.env.local`, etc.)
 
 ### Infrastructure Helpers
-- [ ] Create `lib/convex.ts` (client + hooks)
+- [x] Create `lib/convex.ts` (client + hooks)
 - [ ] Create `lib/auth/` folder with helpers
-- [ ] Create `middleware.ts` (session validation, RBAC)
-- [ ] Set up TypeScript strict mode
-- [ ] Configure ESLint + Prettier
+- [x] Create `middleware.ts` (session validation, RBAC)
+- [x] Set up TypeScript strict mode
+- [x] Configure ESLint + Prettier
 - [ ] Set up GitHub Actions for CI/CD
 
-**Status**: Not Started
+**Status**: 🔄 In Progress
 **Estimated Time**: 1 week
 
 ---
@@ -63,21 +63,21 @@
 ## Phase 2 — Authentication System
 
 ### Auth Pages & Flows
-- [ ] Create `app/(auth)/layout.tsx` (centered layout)
-- [ ] Create `app/(auth)/sign-up/page.tsx` (method selector)
+- [x] Create `app/(auth)/layout.tsx` (centered layout)
+- [/] Create `app/(auth)/sign-up/page.tsx` (method selector)
 - [ ] Create `app/(auth)/sign-up/email/page.tsx` (form)
 - [ ] Create `app/(auth)/sign-up/phone/page.tsx` (OTP flow)
-- [ ] Create `app/(auth)/sign-in/page.tsx` (method selector)
+- [/] Create `app/(auth)/sign-in/page.tsx` (method selector)
 - [ ] Create `app/(auth)/sign-in/email/page.tsx` (form)
 - [ ] Create `app/(auth)/sign-in/phone/page.tsx` (OTP)
-- [ ] Create `app/(auth)/verify-email/page.tsx` (OTP input)
-- [ ] Create `app/(auth)/forgot-password/page.tsx`
+- [x] Create `app/(auth)/verify-email/page.tsx` (OTP input)
+- [x] Create `app/(auth)/forgot-password/page.tsx`
 - [ ] Create `app/(auth)/reset-password/page.tsx`
 - [ ] Create `app/(auth)/magic-link/page.tsx`
-- [ ] Create `app/(auth)/onboarding/page.tsx` (multi-step)
+- [x] Create `app/(auth)/onboarding/page.tsx` (multi-step)
 
 ### Auth Mutations & Queries
-- [ ] Create `convex/auth.ts` with all mutation handlers
+- [x] Create `convex/auth.ts` with all mutation handlers
 - [ ] Implement `signUpEmail()` mutation
 - [ ] Implement `signUpPhone()` mutation
 - [ ] Implement `signInEmail()` mutation
@@ -107,7 +107,7 @@
 - [ ] Implement session refresh (before expiry)
 - [ ] Test auth flow end-to-end
 
-**Status**: Not Started
+**Status**: 🔄 In Progress
 **Estimated Time**: 1 week
 
 ---
@@ -115,13 +115,13 @@
 ## Phase 3 — Core Layout & Navigation
 
 ### Main App Layout
-- [ ] Create `app/(app)/layout.tsx` (shell)
-- [ ] Create `components/layout/app-sidebar.tsx`
-- [ ] Create `components/layout/top-bar.tsx`
+- [x] Create `app/(app)/layout.tsx` (shell)
+- [x] Create `components/layout/app-sidebar.tsx`
+- [x] Create `components/layout/top-bar.tsx`
 - [ ] Create `components/layout/breadcrumbs.tsx`
-- [ ] Create `components/layout/theme-toggle.tsx`
+- [x] Create `components/layout/theme-toggle.tsx`
 - [ ] Create `components/layout/user-menu.tsx`
-- [ ] Create `components/layout/notification-bell.tsx`
+- [x] Create `components/layout/notification-bell.tsx`
 
 ### Navigation & Search
 - [ ] Implement sidebar collapse/expand
@@ -137,7 +137,7 @@
 - [ ] Persist theme preference to localStorage
 - [ ] System preference detection
 
-**Status**: Not Started
+**Status**: 🔄 In Progress
 **Estimated Time**: 3 days
 
 ---
@@ -145,7 +145,7 @@
 ## Phase 4 — Real-Time Messaging Core
 
 ### Convex Messaging System
-- [ ] Create `convex/messages.ts` with all mutations
+- [x] Create `convex/messages.ts` with all mutations
 - [ ] Implement `sendMessage()` mutation
 - [ ] Implement `editMessage()` mutation
 - [ ] Implement `deleteMessage()` mutation (soft-delete + audit)
@@ -160,10 +160,10 @@
 - [ ] Add validation with Zod
 
 ### Chat UI Components
-- [ ] Create `app/(app)/chat/[roomId]/page.tsx` (main page)
-- [ ] Create `components/chat/MessageBubble.tsx`
-- [ ] Create `components/chat/MessageList.tsx` (scrollable)
-- [ ] Create `components/chat/MessageInput.tsx`
+- [x] Create `app/(app)/room/[roomId]/page.tsx` (main page)
+- [x] Create `components/chat/MessageBubble.tsx`
+- [x] Create `components/chat/MessageList.tsx` (scrollable)
+- [x] Create `components/chat/MessageInput.tsx`
 - [ ] Create `components/chat/RichTextEditor.tsx`
 - [ ] Create `components/chat/ReactionPicker.tsx`
 - [ ] Create `components/chat/TypingIndicator.tsx`
@@ -193,7 +193,7 @@
 - [ ] Test emoji reactions
 - [ ] Test rich text formatting
 
-**Status**: Not Started
+**Status**: 🔄 In Progress
 **Estimated Time**: 1.5 weeks
 
 ---
@@ -201,7 +201,7 @@
 ## Phase 5 — Rooms & Lobby System
 
 ### Convex Room System
-- [ ] Create `convex/rooms.ts` with CRUD
+- [x] Create `convex/rooms.ts` with CRUD
 - [ ] Implement `createRoom()` mutation
 - [ ] Implement `updateRoom()` mutation
 - [ ] Implement `deleteRoom()` mutation (soft-delete)
@@ -216,8 +216,8 @@
 - [ ] Add permission-based access control
 
 ### Room UI Pages
-- [ ] Create `app/(app)/lobby/page.tsx` (main lobby)
-- [ ] Create `app/(app)/rooms/[roomId]/page.tsx`
+- [x] Create `app/(app)/lobby/page.tsx` (main lobby)
+- [x] Create `app/(app)/room/[roomId]/page.tsx`
 - [ ] Create `app/(app)/rooms/[roomId]/settings/page.tsx` (admin only)
 - [ ] Create `app/(app)/rooms/create/page.tsx` (creation wizard)
 
@@ -243,7 +243,7 @@
 - [ ] Role management (custom roles - optional)
 - [ ] Addon management (enable/disable in room)
 
-**Status**: Not Started
+**Status**: 🔄 In Progress
 **Estimated Time**: 1 week
 
 ---
@@ -251,8 +251,8 @@
 ## Phase 6 — User Profiles
 
 ### Convex User System
-- [ ] Create `convex/users.ts` with queries
-- [ ] Create `convex/userProfiles.ts` with mutations
+- [x] Create `convex/users.ts` with queries
+- [x] Create `convex/userProfiles.ts` with mutations
 - [ ] Implement `getUserProfile()` query
 - [ ] Implement `getUserByUsername()` query
 - [ ] Implement `getPublicProfile()` query (limited fields)
@@ -262,8 +262,8 @@
 - [ ] Implement friendship CRUD
 
 ### Profile Pages
-- [ ] Create `app/(app)/profile/[userId]/page.tsx` (public)
-- [ ] Create `app/(app)/settings/profile/page.tsx` (edit own)
+- [x] Create `app/(app)/profile/[userId]/page.tsx` (public)
+- [x] Create `app/(app)/settings/profile/page.tsx` (edit own)
 
 ### Profile Features
 - **Public Profile**:
@@ -292,7 +292,7 @@
 - [ ] Create `components/profile/ActivityFeed.tsx`
 - [ ] Create `components/profile/EditProfileForm.tsx`
 
-**Status**: Not Started
+**Status**: 🔄 In Progress
 **Estimated Time**: 3 days
 
 ---
@@ -300,7 +300,7 @@
 ## Phase 7 — Video & Audio Calling
 
 ### Convex Call System
-- [ ] Create `convex/calls.ts` with mutations
+- [x] Create `convex/calls.ts` with mutations
 - [ ] Implement `initiateCall()` mutation
 - [ ] Implement `answerCall()` mutation
 - [ ] Implement `rejectCall()` mutation
@@ -317,7 +317,7 @@
 - [ ] Create `app/(app)/calls/[callId]/page.tsx` (live call screen)
 - [ ] Create `components/calls/IncomingCallDialog.tsx`
 - [ ] Create `components/calls/CallControls.tsx`
-- [ ] Create `components/calls/ParticipantGrid.tsx`
+- [x] Create `components/room/CallRoom.tsx`
 - [ ] Create `components/calls/CallQualityIndicator.tsx`
 - [ ] Create `components/calls/ScreenShareToggle.tsx`
 - [ ] Create `components/calls/RecordingIndicator.tsx`
@@ -350,7 +350,7 @@
 - [ ] Test call quality metrics
 - [ ] Test incoming call dialog
 
-**Status**: Not Started
+**Status**: 🔄 In Progress
 **Estimated Time**: 1.5 weeks
 
 ---
@@ -358,9 +358,9 @@
 ## Phase 8 — Gamification System
 
 ### Convex Gamification
-- [ ] Create `convex/gamification.ts` with all mutations
+- [x] Create `convex/gamification.ts` with all mutations
 - [ ] Implement `addXP()` mutation (with streak multiplier)
-- [ ] Implement `unlockBadge()` mutation
+- [x] Implement `unlockBadge()` mutation
 - [ ] Implement `getLeaderboard()` query
 - [ ] Implement `getUserStats()` query
 - [ ] Implement `getStreak()` query
@@ -393,7 +393,7 @@
 - [ ] Personal stats page (XP, level, badges, rank)
 - [ ] Seasonal challenges (limited-time events)
 
-**Status**: Not Started
+**Status**: 🔄 In Progress
 **Estimated Time**: 1 week
 
 ---
@@ -577,7 +577,7 @@
 - [ ] Desktop notifications (push API - optional)
 - [ ] Email digest (summary of missed notifications)
 
-**Status**: Not Started
+**Status**: 🔄 In Progress
 **Estimated Time**: 3 days
 
 ---
@@ -710,18 +710,18 @@
 | Phase | Status | % Complete | Notes |
 |-------|--------|-----------|-------|
 | 0 | ✅ Done | 100% | Architecture & planning complete |
-| 1 | 🔄 In Progress | 0% | Starting foundation setup |
-| 2 | ⏳ Pending | 0% | Auth system (1 week) |
-| 3 | ⏳ Pending | 0% | Layout & navigation (3 days) |
-| 4 | ⏳ Pending | 0% | Messaging (1.5 weeks) |
-| 5 | ⏳ Pending | 0% | Rooms & lobby (1 week) |
-| 6 | ⏳ Pending | 0% | User profiles (3 days) |
-| 7 | ⏳ Pending | 0% | Calling (1.5 weeks) |
-| 8 | ⏳ Pending | 0% | Gamification (1 week) |
+| 1 | 🔄 In Progress | 80% | Foundation setup mostly complete |
+| 2 | 🔄 In Progress | 40% | Auth system structure ready |
+| 3 | 🔄 In Progress | 60% | Shell and navigation base |
+| 4 | 🔄 In Progress | 50% | Messaging core and UI ready |
+| 5 | 🔄 In Progress | 40% | Rooms and lobby basics |
+| 6 | 🔄 In Progress | 30% | Profile pages and mutations |
+| 7 | 🔄 In Progress | 40% | Call backend and base UI |
+| 8 | 🔄 In Progress | 60% | Gamification logic and data |
 | 9 | ⏳ Pending | 0% | Monetization (1.5 weeks) |
 | 10 | ⏳ Pending | 0% | Moderation (1 week) |
 | 11 | ⏳ Pending | 0% | Plugins (1.5 weeks) |
-| 12 | ⏳ Pending | 0% | Notifications (3 days) |
+| 12 | 🔄 In Progress | 70% | Notifications backend and bell |
 | 13 | ⏳ Pending | 0% | Security & compliance (1 week) |
 | 14 | ⏳ Pending | 0% | Deployment & testing (1 week) |
 | 15 | ⏳ Pending | 0% | Post-launch (ongoing) |
