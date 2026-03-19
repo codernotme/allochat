@@ -1,16 +1,17 @@
 'use client';
 
 import { useQuery, useMutation } from 'convex/react';
+import type { Doc } from '@/convex/_generated/dataModel';
 import { api } from '@/convex/_generated/api';
-import { useState } from 'react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
+
+type NotificationDoc = Doc<'notifications'>;
 
 export function NotificationBell() {
   const notifications = useQuery(api.notifications.getUnread);
@@ -45,7 +46,7 @@ export function NotificationBell() {
         
         <Separator className="bg-border/30 mx-4" />
 
-        <ScrollArea className="h-[350px]">
+        <ScrollArea className="h-80">
           {notifications === undefined && (
             <div className="flex flex-col gap-2 p-4">
                {[...Array(3)].map((_, i) => <div key={i} className="bg-muted h-14 animate-pulse rounded-lg" />)}
@@ -53,14 +54,14 @@ export function NotificationBell() {
           )}
           
           {notifications?.length === 0 && (
-            <div className="flex h-[300px] flex-col items-center justify-center gap-2 p-6 text-center italic">
+            <div className="flex h-72 flex-col items-center justify-center gap-2 p-6 text-center italic">
               <Icon icon="solar:bell-linear" className="text-muted-foreground/30 size-10" />
               <p className="text-muted-foreground text-xs font-medium">All caught up! No unread notifications.</p>
             </div>
           )}
 
           <div className="flex flex-col py-2">
-            {notifications?.map((notif: any) => (
+            {notifications?.map((notif: NotificationDoc) => (
               <Link 
                 key={notif._id} 
                 href={notif.link || '#'} 

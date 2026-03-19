@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -17,14 +17,36 @@ function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
+  const wasSentFromSignup = searchParams.get('sent') === '1';
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const autoSentRef = useRef(false);
+
+  useEffect(() => {
+    // Fallback: if user lands directly on this page without an existing OTP send,
+    // trigger one automatically so authVerificationCodes is populated.
+    if (autoSentRef.current || !email || wasSentFromSignup) {
+      return;
+    }
+
+    autoSentRef.current = true;
+
+    void (async () => {
+      try {
+        await signIn('resend', { email, flow: 'signIn' });
+        toast.success('Verification code sent.');
+        setResendCooldown(60);
+      } catch {
+        toast.error('Could not send verification code. Please use resend.');
+      }
+    })();
+  }, [email, signIn, wasSentFromSignup]);
 
   async function handleVerify(code: string) {
     setLoading(true);
     try {
-      await signIn('resend', { code, email });
+      await signIn('resend', { code, email, flow: 'signIn' });
       router.push('/onboarding');
     } catch {
       toast.error('Invalid or expired code. Please try again.');
@@ -36,9 +58,14 @@ function VerifyEmailContent() {
 
   async function handleResend() {
     if (resendCooldown > 0) return;
+    if (!email) {
+      toast.error('Missing email in verification link. Please sign up again.');
+      return;
+    }
+
     try {
-      // Trigger a new OTP send by signing in again with the email (if your flow supports it)
-      // For now, we simulate success as the actual re-send logic depends on your auth setup
+      // Convex Auth Email provider sends a new code when we trigger the email flow again.
+      await signIn('resend', { email, flow: 'signIn' });
       toast.success('A new code has been sent to your email.');
       setResendCooldown(60);
       const interval = setInterval(() => {
@@ -59,7 +86,7 @@ function VerifyEmailContent() {
           <Icon icon="solar:letter-unread-bold-duotone" className="size-8 text-blue-600 dark:text-blue-300" />
         </div>
         <h2 className="text-2xl font-bold tracking-tight">Check your inbox</h2>
-        <p className="text-muted-foreground text-sm max-w-[280px]">
+        <p className="text-muted-foreground max-w-70 text-sm">
           We&apos;ve sent a 6-digit code to <span className="text-foreground font-medium">{email || 'your email'}</span>.
         </p>
       </div>

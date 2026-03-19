@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Figtree, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AnalyticsCookieSync } from '@/components/analytics-cookie-sync';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ConvexClientProvider } from '@/lib/convex';
@@ -46,6 +47,7 @@ export default function RootLayout({
       <body>
         <ConvexClientProvider>
           <ThemeProvider>
+            <AnalyticsCookieSync />
             {children}
             <Toaster richColors position="bottom-right" />
           </ThemeProvider>

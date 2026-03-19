@@ -62,14 +62,14 @@
 
 ## Phase 2 — Authentication System
 
+> Scope note: Phone-based auth/OTP is intentionally out of scope for now. Email + OAuth only.
+
 ### Auth Pages & Flows
 - [x] Create `app/(auth)/layout.tsx` (centered layout)
-- [/] Create `app/(auth)/sign-up/page.tsx` (method selector)
-- [ ] Create `app/(auth)/sign-up/email/page.tsx` (form)
-- [ ] Create `app/(auth)/sign-up/phone/page.tsx` (OTP flow)
-- [/] Create `app/(auth)/sign-in/page.tsx` (method selector)
-- [ ] Create `app/(auth)/sign-in/email/page.tsx` (form)
-- [ ] Create `app/(auth)/sign-in/phone/page.tsx` (OTP)
+- [x] Create `app/(auth)/sign-up/page.tsx` (method selector)
+- [x] Create `app/(auth)/sign-up/email/page.tsx` (form)
+- [x] Create `app/(auth)/sign-in/page.tsx` (method selector)
+- [x] Create `app/(auth)/sign-in/email/page.tsx` (form)
 - [x] Create `app/(auth)/verify-email/page.tsx` (OTP input)
 - [x] Create `app/(auth)/forgot-password/page.tsx`
 - [ ] Create `app/(auth)/reset-password/page.tsx`
@@ -79,9 +79,7 @@
 ### Auth Mutations & Queries
 - [x] Create `convex/auth.ts` with all mutation handlers
 - [ ] Implement `signUpEmail()` mutation
-- [ ] Implement `signUpPhone()` mutation
 - [ ] Implement `signInEmail()` mutation
-- [ ] Implement `signInPhone()` mutation
 - [ ] Implement `signInMagicLink()` mutation
 - [ ] Implement `signInOAuth()` mutation
 - [ ] Implement `requestPasswordReset()` mutation

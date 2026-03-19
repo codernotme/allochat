@@ -61,9 +61,11 @@ const providers = [
     id: 'resend',
     maxAge: 10 * 60,
     async sendVerificationRequest({ identifier: email, url, token }) {
-      const resendApi = process.env.RESEND_API;
+      const resendApi = process.env.RESEND_API_KEY || process.env.RESEND_API;
+      const fromEmail = process.env.AUTH_EMAIL_FROM || 'noreply@codernotme.studio';
+
       if (!resendApi) {
-        console.error("RESEND_API not found in environment variables");
+        console.error('RESEND_API_KEY not found in environment variables');
         console.log(`Auth email for ${email}: ${url} (Token: ${token})`);
         return;
       }
@@ -75,7 +77,7 @@ const providers = [
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "AlloChat <noreply@codernotme.studio>", // default sender for testing
+          from: `AlloChat <${fromEmail}>`,
           to: [email],
           subject: "Verify your email - AlloChat",
           html: `

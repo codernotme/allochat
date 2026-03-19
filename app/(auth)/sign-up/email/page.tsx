@@ -134,7 +134,14 @@ export default function SignUpEmailPage() {
         username: data.username,
         flow: 'signUp',
       });
-      router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+
+      // Generate and send an OTP immediately after signup so verification has a valid code row.
+      await signIn('resend', {
+        email: data.email,
+        flow: 'signIn',
+      });
+
+      router.push(`/verify-email?email=${encodeURIComponent(data.email)}&sent=1`);
     } catch {
       toast.error('Could not create account. Email may already be in use.');
     } finally {
