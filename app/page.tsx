@@ -1,59 +1,50 @@
-import Link from 'next/link';
-import { Icon } from '@iconify/react';
+import { Cursor } from "@/components/cursor";
+import { AnimatedHero } from "@/components/animated-hero";
+import { FeatureCard } from "@/components/feature-card";
+import { homeData } from "@/app/data/home";
 
 export default function Page() {
   return (
-    <main className="bg-background min-h-svh">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 md:py-20">
-        <div className="grid items-center gap-10 md:grid-cols-2">
-          <div className="flex flex-col gap-5">
-            <p className="text-primary text-sm font-semibold uppercase tracking-wider">AlloChat</p>
-            <h1 className="text-foreground text-4xl font-bold leading-tight md:text-6xl">
-              Real-time chat, rooms, and calls in one place.
-            </h1>
-            <p className="text-muted-foreground max-w-xl text-base md:text-lg">
-              Build communities with instant messaging, voice/video calls, profiles, and gamification powered by Next.js + Convex.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/sign-up" className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center justify-center rounded-4xl px-4 text-sm font-medium transition-colors">
-                Get Started
-              </Link>
-              <Link href="/sign-in" className="border-border bg-background hover:bg-muted inline-flex h-10 items-center justify-center rounded-4xl border px-4 text-sm font-medium transition-colors">
-                Sign In
-              </Link>
-              <Link href="/lobby" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 inline-flex h-10 items-center justify-center rounded-4xl px-4 text-sm font-medium transition-colors">
-                Explore Lobby
-              </Link>
-            </div>
-          </div>
+    <main className="bg-background relative min-h-svh overflow-hidden selection:bg-primary/20 selection:text-primary">
+      <Cursor />
+      
+      {/* Dynamic Backgrounds */}
+      <div className="absolute top-0 -left-64 h-[40rem] w-[40rem] rounded-full bg-primary/10 blur-[130px] pointer-events-none mix-blend-screen" />
+      <div className="absolute top-64 -right-64 h-[40rem] w-[40rem] rounded-full bg-secondary/10 blur-[130px] pointer-events-none mix-blend-screen" />
+      
+      {/* Decorative Grid Pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-          <div className="from-primary/10 via-background to-secondary/10 border-border grid gap-4 rounded-3xl border bg-gradient-to-br p-5 shadow-sm">
-            <FeatureRow icon="solar:chat-round-dots-linear" title="Realtime Messaging" text="Low-latency room chat with reactions and mentions." />
-            <FeatureRow icon="solar:phone-calling-rounded-linear" title="Voice & Video" text="Join room calls with reliable signaling and quality controls." />
-            <FeatureRow icon="solar:users-group-rounded-linear" title="Community Rooms" text="Create public or private spaces with moderation controls." />
-            <FeatureRow icon="solar:medal-ribbons-star-linear" title="Gamification" text="Levels, badges, streaks, and leaderboards to boost engagement." />
+      <section className="relative mx-auto flex w-full max-w-7xl flex-col gap-16 px-6 py-20 pb-12 sm:px-8 md:gap-24 md:py-32 lg:px-12">
+        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+          <AnimatedHero />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 relative z-10 w-full [perspective:1000px]">
+            {homeData.features.map((feature, index) => (
+              <FeatureCard
+                key={index}
+                index={index}
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+              />
+            ))}
           </div>
         </div>
 
-        <div className="text-muted-foreground border-border flex flex-wrap items-center justify-between gap-3 border-t pt-6 text-sm">
-          <span>AlloChat</span>
-          <span>Next.js + Convex + Base UI</span>
+        <div className="mt-10 border-t border-border/40 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm font-medium text-muted-foreground z-10 w-full">
+          <span className="flex items-center gap-2 backdrop-blur-md bg-background/50 px-4 py-2 rounded-full border border-border/40 shadow-sm transition-colors hover:bg-background/80">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+            </span>
+            {homeData.footer.left} Systems Operational
+          </span>
+          <span className="bg-secondary/10 text-secondary-foreground border border-secondary/20 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-sm backdrop-blur-md transition-all hover:bg-secondary/20">
+            {homeData.footer.right}
+          </span>
         </div>
       </section>
     </main>
-  )
-}
-
-function FeatureRow({ icon, title, text }: { icon: string; title: string; text: string }) {
-  return (
-    <div className="bg-card/70 border-border flex items-start gap-3 rounded-2xl border p-4">
-      <div className="bg-primary/10 text-primary rounded-xl p-2">
-        <Icon icon={icon} className="size-5" />
-      </div>
-      <div>
-        <p className="text-foreground text-sm font-semibold">{title}</p>
-        <p className="text-muted-foreground mt-1 text-sm">{text}</p>
-      </div>
-    </div>
   );
 }
