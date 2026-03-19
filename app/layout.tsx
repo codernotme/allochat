@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Figtree, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { Suspense } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AnalyticsCookieSync } from '@/components/analytics-cookie-sync';
 import { Toaster } from 'sonner';
@@ -47,7 +48,9 @@ export default function RootLayout({
       <body>
         <ConvexClientProvider>
           <ThemeProvider>
-            <AnalyticsCookieSync />
+            <Suspense fallback={null}>
+              <AnalyticsCookieSync />
+            </Suspense>
             {children}
             <Toaster richColors position="bottom-right" />
           </ThemeProvider>

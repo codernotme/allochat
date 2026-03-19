@@ -16,6 +16,15 @@ import {
   faqs,
 } from "@/app/data/home";
 import { HeroChatMockup } from "@/components/hero-chat-mockup";
+import { StatsBar } from "@/components/stats-bar";
+import { InteractiveDemo } from "@/components/interactive-demo";
+import { LeaderboardPreview } from "@/components/leaderboard-preview";
+import { PricingSection } from "@/components/pricing-section";
+import { ComparisonTable } from "@/components/comparison-table";
+import { CommunitySpotlight } from "@/components/community-spotlight";
+import { MobileAppSection } from "@/components/mobile-app-section";
+import { TrustSafetySection } from "@/components/trust-safety";
+import { NewsletterSection } from "@/components/newsletter-section";
 
 // ─── Animation helpers ──────────────────────────────────────────────────────
 
@@ -151,6 +160,8 @@ export default function Page() {
         </div>
       </section>
 
+      <StatsBar />
+
       {/* ── FEATURES ─────────────────────────────────────────────────────── */}
       <section id="features" className="py-24 md:py-32 relative">
         <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
@@ -188,6 +199,8 @@ export default function Page() {
           </div>
         </div>
       </section>
+
+      <InteractiveDemo />
 
       {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
       <section id="how-it-works" className="py-24 md:py-32 bg-muted/30 border-y border-border/40">
@@ -280,6 +293,11 @@ export default function Page() {
         </div>
       </section>
 
+      <LeaderboardPreview />
+      <PricingSection />
+      <ComparisonTable />
+      <CommunitySpotlight />
+
       {/* ── TESTIMONIALS ─────────────────────────────────────────────────── */}
       <section className="py-24 md:py-32 bg-muted/30 border-y border-border/40">
         <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
@@ -314,6 +332,9 @@ export default function Page() {
         </div>
       </section>
 
+      <MobileAppSection />
+      <TrustSafetySection />
+
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section className="py-24 md:py-32">
         <div className="mx-auto max-w-3xl px-6 sm:px-8 lg:px-12">
@@ -329,6 +350,8 @@ export default function Page() {
           </div>
         </div>
       </section>
+
+      <NewsletterSection />
 
       {/* ── CTA BAND ─────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden py-24 md:py-32">

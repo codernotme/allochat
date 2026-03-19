@@ -218,3 +218,68 @@ export const footer = {
   bottom: `© ${new Date().getFullYear()} AlloChat. All rights reserved.`,
 };
 
+export const stats = [
+  { value: "50,000+", label: "Active Users" },
+  { value: "2.4M", label: "Messages / day" },
+  { value: "1,200+", label: "Active Rooms" },
+  { value: "80+", label: "Countries" },
+  { value: "4.9/5", label: "Avg Rating" },
+];
+
+export const pricing = {
+  free: {
+    name: "Free Forever",
+    features: [
+      "Unlimited rooms",
+      "Text messaging",
+      "Voice calls (up to 10 people)",
+      "Basic XP & badges",
+      "Mobile + web access",
+    ],
+  },
+  pro: {
+    name: "Pro",
+    price: "₹199",
+    period: "/mo",
+    features: [
+      "Everything in Free",
+      "HD video calls (up to 50 people)",
+      "Custom room themes",
+      "Priority support",
+      "Exclusive Pro badges",
+      "Advanced moderation tools",
+      "Analytics dashboard",
+    ],
+  },
+};
+
+export const comparison = [
+  { feature: "Free video calls", allochat: true, discord: "Limited", slack: false },
+  { feature: "Public community rooms", allochat: true, discord: true, slack: false },
+  { feature: "XP Gamification", allochat: true, discord: false, slack: false },
+  { feature: "No account for reading", allochat: true, discord: false, slack: false },
+  { feature: "Real-time translation", allochat: true, discord: false, slack: false },
+  { feature: "Built-in moderation AI", allochat: true, discord: false, slack: false },
+  { feature: "Mobile web (no download)", allochat: true, discord: "Limited", slack: "Limited" },
+];
+
+export const leaderboardPreview = [
+  { rank: 1, name: "Alex K.", level: 89, xp: "12,450 XP", avatar: "AK", color: "text-amber-500" },
+  { rank: 2, name: "Priya M.", level: 84, xp: "11,200 XP", avatar: "PM", color: "text-slate-400" },
+  { rank: 3, name: "Jay T.", level: 79, xp: "10,890 XP", avatar: "JT", color: "text-orange-700" },
+  { rank: 4, name: "Sam R.", level: 71, xp: "9,340 XP", avatar: "SR", color: "text-muted-foreground" },
+  { rank: 5, name: "Mia C.", level: 67, xp: "8,700 XP", avatar: "MC", color: "text-muted-foreground" },
+];
+
+export const trustSafety = [
+  { icon: "solar:shield-check-bold", title: "AI Moderation", description: "Powered by real-time content scanning" },
+  { icon: "solar:lock-keyhole-bold", title: "End-to-End Encryption", description: "Private messages stay private" },
+  { icon: "solar:eye-bold", title: "Human Review Team", description: "Real people on call 24/7" },
+  { icon: "solar:close-circle-bold", title: "Zero Tolerance Policy", description: "Hate speech removed instantly" },
+];
+
+export const communitySpotlight = [
+  { title: "Gaming Lounge", description: "The most active gaming room anywhere.", members: "1,847", posts: "234", theme: "gaming" },
+  { title: "Study Group", description: "Silent co-working and study sessions.", members: "950", posts: "120", theme: "study" },
+  { title: "Tech & Dev", description: "Talk code, share projects, get help.", members: "1,200", posts: "450", theme: "tech" },
+];

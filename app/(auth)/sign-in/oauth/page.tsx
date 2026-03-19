@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useRouter } from 'next/navigation';
@@ -9,7 +9,7 @@ import { Icon } from '@iconify/react';
 
 const SUPPORTED_PROVIDERS = new Set(['google']);
 
-export default function OAuthSignInPage() {
+function OAuthSignInContent() {
   const { signIn } = useAuthActions();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -51,5 +51,13 @@ export default function OAuthSignInPage() {
         Redirecting to OAuth provider...
       </div>
     </div>
+  );
+}
+
+export default function OAuthSignInPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-55 items-center justify-center"><Icon icon="lucide:loader-2" className="size-4 animate-spin text-muted-foreground" /></div>}>
+      <OAuthSignInContent />
+    </Suspense>
   );
 }
