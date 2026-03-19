@@ -1,1456 +1,1186 @@
-# AlloChat v2.0 — All Functionalities & Feature Breakdown
+# AlloChat v2.0 — Complete Feature & Function Breakdown
 
-> **Status**: Analysis of CodyChat 9.0 → Migration Path to Modern SaaS (Next.js + Shadcn + Convex + Convex Auth)
+> **Platform**: AlloChat v2.0 (rebranded from CodyChat 9.0)
+> **Stack**: Next.js + Shadcn + Convex + Convex Auth
+> **Status**: Analysis Complete → Active Development
 
 ---
 
 ## Table of Contents
-1. [Core Real-Time Features](#core-real-time-features)
-2. [User Management & Authentication](#user-management--authentication)
-3. [Room & Lobby System](#room--lobby-system)
-4. [Calling Features](#calling-features)
-5. [User Profile & Personalization](#user-profile--personalization)
-6. [Gamification System](#gamification-system)
-7. [Chat Features & Content](#chat-features--content)
-8. [Addon/Plugin System](#addonplugin-system)
-9. [Admin Controls & Moderation](#admin-controls--moderation)
-10. [Payment & Monetization](#payment--monetization)
-11. [Infrastructure & Backend](#infrastructure--backend)
+1. [Naming & Nomenclature](#1-naming--nomenclature)
+2. [Real-Time Messaging](#2-real-time-messaging)
+3. [Authentication & User Management](#3-authentication--user-management)
+4. [Room & Lobby System](#4-room--lobby-system)
+5. [Voice & Video Calling](#5-voice--video-calling)
+6. [User Profiles & Presence](#6-user-profiles--presence)
+7. [Gamification System](#7-gamification-system)
+8. [Rich Chat Features](#8-rich-chat-features)
+9. [Addon & Plugin System](#9-addon--plugin-system)
+10. [Moderation & Safety](#10-moderation--safety)
+11. [Payment & Monetization](#11-payment--monetization)
+12. [Notifications System](#12-notifications-system)
+13. [Admin Dashboard](#13-admin-dashboard)
+14. [Infrastructure & Architecture](#14-infrastructure--architecture)
+15. [Custom New Features (v2.0 Only)](#15-custom-new-features-v20-only)
+16. [Feature Comparison Matrix](#16-feature-comparison-matrix)
 
 ---
 
-## 1. Core Real-Time Messaging
+## 1. Naming & Nomenclature
 
-### Current Implementation (CodyChat 9.0)
-**Tech**: MySQL + Redis + jQuery + WebSockets (via server polling/AJAX)
+### Product Name
+| Old (CodyChat 9.0) | New (AlloChat v2.0) |
+|--------------------|---------------------|
+| CodyChat | **AlloChat** |
+| Boom (internal prefix) | **allo** (internal prefix) |
+| `boom_users` table | `users` (Convex table) |
+| `boom_setting` | `settings` (Convex config) |
+| `boom_conversation` | `directMessages` |
+| `boom_private` | `directMessages` |
+| `boom_rooms` | `rooms` |
+| `boom_banned` | `moderationActions` |
+| `boom_upload` | `mediaAttachments` |
+| `boom_radio_stream` | `radioStreams` |
+| VIP addon | **Premium+ / Elite tier** |
+| Adnoyer addon | **Block & Report** system |
+| Commandos addon | **SlashCommand** bot engine |
+| SuperBot addon | **AlloBot** AI system |
+| QuizBot addon | **QuizRoom** game mode |
+| PaintIt addon | **SketchBoard** addon |
+| Voice Record addon | **VoiceNote** feature |
 
-**Features**:
-- ✅ One-on-one instant messaging
-- ✅ Group room messaging (multiple users in same room)
-- ✅ Message history persistence
-- ✅ Online/offline status tracking
-- ✅ Typing indicators
-- ✅ Message read receipts (basic)
-- ✅ Real-time notification push
-- ✅ Message encryption (basic session-based)
+### URL Structure
+| Old PHP | New Next.js |
+|---------|-------------|
+| `/` (root lobby) | `/lobby` or `/app` |
+| `/?room=123` | `/room/[roomId]` |
+| `/admin.php` | `/admin/dashboard` |
+| `/call.php` | `/call/[callId]` |
+| `/recovery.php` | `/auth/forgot-password` |
+| `/?page=profile` | `/profile/[userId]` |
 
-**Current Limitations**:
-- Polling-based real-time (inefficient at scale)
-- No message reactions/emoji support in core
-- Limited message search
-- No message editing/deletion
-- No thread/conversation feature
+### Permission Rank System
+| Old Rank Value | New Role Name |
+|----------------|---------------|
+| 999 (superadmin) | `owner` |
+| 100 (admin) | `admin` |
+| 70 (operator) | `moderator` |
+| 50 (staff) | `staff` |
+| 6 (room admin) | `roomAdmin` |
+| 5 (room mod) | `roomModerator` |
+| 1 (VIP) | `premium` |
+| 0 (user) | `user` |
+| -1 (guest) | `guest` |
 
-### Enhanced SaaS Version (v2.0)
-**Tech**: Convex realtime engine + Next.js App Router + Shadcn
+---
 
-**Improvements**:
-- **WebSocket-based** messaging (Convex real-time subscriptions)
-- **Advanced search** with full-text index on messages
-- **Message reactions** (emoji reactions + custom reactions)
-- **Message editing & deletion** with history/audit trail
-- **Typing indicator** with debounce optimization
-- **Read receipts** (individual + group-level)
-- **Message pinning** in rooms
-- **Message threading** (reply-to-message feature)
-- **Rich text support** (markdown, code blocks, formatting)
-- **Inline media** support (images, videos, GIFs via Giphy integration native)
-- **Message search** with filters (date, sender, room, keyword)
+## 2. Real-Time Messaging
 
-**Implementation Steps**:
+### CodyChat 9.0 — What It Had
+- **Tech**: MySQL polling queries + Redis cache + jQuery AJAX
+- Polling interval configured via `$setting['speed']` (default 3000ms = 3s)
+- One-on-one private messaging (`boom_private` + `boom_conversation` tables)
+- Group room messaging (`boom_main` table)
+- Message history persistence (configurable by admin)
+- Online/offline status tracked via `user_last` + `user_roomid` fields
+- Typing indicators (polling-based)
+- Basic read receipts via conversation table
+- Real-time via Redis pub/sub (if enabled)
+- Message encryption: session-based (basic)
+- No message editing
+- No message threading
+- No emoji reactions
+- Full-text search via MySQL LIKE
+
+### AlloChat v2.0 — Enhanced
+**Tech**: Convex real-time subscriptions (WebSocket-native, <100ms latency)
+
+#### Key Improvements
+| Feature | CodyChat | AlloChat v2.0 |
+|---------|---------|---------------|
+| Real-time transport | 3s AJAX polling | WebSocket (<100ms) |
+| Message editing | ❌ | ✅ With edit history |
+| Message deletion | ❌ | ✅ Soft-delete + audit |
+| Emoji reactions | ❌ | ✅ Custom + standard |
+| Threading | ❌ | ✅ Reply threads |
+| Rich text | ❌ | ✅ Markdown + code blocks |
+| Search | LIKE query | ✅ Convex full-text index |
+| Message pinning | Basic | ✅ Per-room, ordered |
+| DM conversations | Simple table | ✅ Full conversation view |
+
+#### Convex Schema
 ```typescript
-// 1. Convex Schema (convex/schema.ts)
-defineSchema({
-  messages: defineTable({
-    roomId: v.id('rooms'),
-    senderId: v.id('users'),
-    content: v.string(),
-    richContent: v.optional(v.object({
-      blocks: v.array(v.any()), // Rich text blocks
-    })),
-    reactions: v.array(v.object({
-      emoji: v.string(),
-      userIds: v.array(v.id('users')),
-    })),
-    replyTo: v.optional(v.id('messages')),
-    isPinned: v.boolean(),
-    isDeleted: v.boolean(),
-    editedAt: v.optional(v.number()),
-    createdAt: v.number(),
-    readBy: v.array(v.object({
-      userId: v.id('users'),
-      readAt: v.number(),
-    })),
-  }).index('byRoomId', ['roomId', 'createdAt']),
-});
+// convex/schema.ts
+messages: defineTable({
+  roomId: v.id('rooms'),
+  senderId: v.id('users'),
+  content: v.string(),
+  richContent: v.optional(v.object({ blocks: v.array(v.any()) })),
+  replyTo: v.optional(v.id('messages')),
+  isPinned: v.boolean(),
+  isDeleted: v.boolean(),
+  editedAt: v.optional(v.number()),
+  createdAt: v.number(),
+  type: v.union(
+    v.literal('text'),
+    v.literal('media'),
+    v.literal('system'),
+    v.literal('gift'),
+    v.literal('voice')
+  ),
+  readBy: v.array(v.object({ userId: v.id('users'), readAt: v.number() })),
+}).index('byRoom', ['roomId', 'createdAt'])
+  .searchIndex('searchMessages', { searchField: 'content', filterFields: ['roomId'] }),
 
-// 2. React Component (components/chat/MessageBubble.tsx)
-export function MessageBubble({ message, currentUser }) {
-  return (
-    <div className="message-group">
-      <div className="message">{message.content}</div>
-      <MessageReactions message={message} />
-      <MessageActions message={message} />
-      <ReadReceipts message={message} />
-    </div>
-  );
-}
+directMessages: defineTable({
+  conversationId: v.id('conversations'),
+  senderId: v.id('users'),
+  content: v.string(),
+  isDeleted: v.boolean(),
+  createdAt: v.number(),
+  readAt: v.optional(v.number()),
+}).index('byConversation', ['conversationId', 'createdAt']),
 
-// 3. Convex Mutation (convex/messages.ts)
-export const sendMessage = mutation({
-  args: {
-    roomId: v.id('rooms'),
-    content: v.string(),
-    replyTo: v.optional(v.id('messages')),
-  },
-  handler: async (ctx, { roomId, content, replyTo }) => {
-    const userId = await ctx.auth.getUserId();
-    return ctx.db.insert('messages', {
-      roomId,
-      senderId: userId,
-      content,
-      replyTo,
-      createdAt: Date.now(),
-      readBy: [{ userId, readAt: Date.now() }],
-    });
-  },
-});
+conversations: defineTable({
+  participantIds: v.array(v.id('users')),
+  lastMessageAt: v.number(),
+  lastMessage: v.optional(v.string()),
+}).index('byParticipant', ['participantIds']),
+```
 
-// 4. Real-time Subscription (hooks/useRoomMessages.ts)
-export function useRoomMessages(roomId: string) {
-  return useQuery(api.messages.list, { roomId });
-}
+#### Convex Functions
+```typescript
+// convex/messages.ts
+sendMessage(roomId, content, replyTo?)        // Send to room
+editMessage(messageId, newContent)            // Edit with history
+deleteMessage(messageId)                      // Soft-delete
+addReaction(messageId, emoji)                 // Add emoji reaction
+removeReaction(messageId, emoji)              // Remove reaction
+pinMessage(messageId, roomId)                 // Pin in room
+unpinMessage(messageId)                       // Unpin
+listMessages(roomId, paginationOpts)          // Paginated room messages
+searchMessages(query, roomId?)               // Full-text search
+sendDirectMessage(recipientId, content)       // DM
+markAsRead(conversationId)                    // Mark DM read
+// Real-time
+watchRoomMessages(roomId) → subscription     // Live message stream
+watchDirectMessages(conversationId)          // Live DM stream
+```
+
+#### Components
+```
+components/chat/
+├── MessageBubble.tsx       # Single message display (text/media/system)
+├── MessageList.tsx         # Virtualized infinite scroll list
+├── MessageInput.tsx        # Rich input with toolbar
+├── RichTextEditor.tsx      # Tiptap/Plate editor integration
+├── ReactionPicker.tsx      # Emoji reaction selector
+├── TypingIndicator.tsx     # "X is typing..." (debounced)
+├── ReadReceipts.tsx        # Per-message read status
+├── PinnedMessages.tsx      # Pinned message bar at top
+├── ThreadView.tsx          # Threaded reply view
+└── GiphyPicker.tsx         # GIF search (Giphy API)
 ```
 
 ---
 
-## 2. User Management & Authentication
+## 3. Authentication & User Management
 
-### Current Implementation (CodyChat 9.0)
-**Auth Methods**:
-- ✅ Email + password registration/login
-- ✅ Username-based login (unique per user)
-- ✅ Session cookies (PHP SESSION)
-- ✅ "Remember Me" functionality
-- ✅ Password reset via email
-- ✅ Email verification (basic OTP or link)
+### CodyChat 9.0 — What It Had
+- Email + password only (MD5/SHA hash — insecure)
+- Session via PHP `$_COOKIE` (BOOM_PREFIX + userid/utk)
+- Username-based login with "remember me"
+- Password reset via email (basic)
+- Email verification OTP
+- Guest accounts (configurable)
+- User ranks: 0 (user), 6 (room admin), 50 (staff), 70 (op), 100 (admin), 999 (owner)
+- IP-based ban/block system
+- Registration limits: max accounts per IP per day
+- COPPA age check (14+ minimum)
+- Country/language detection
+- VPN detection (via external API)
+- Captcha support (reCAPTCHA)
 
-**User Data**:
-- Username, email, password hash (MD5/SHA - **outdated**)
-- Avatar (uploaded or default)
-- User status (online/away/offline)
-- Last seen timestamp
-- Profile description
-- User roles/permissions
+### AlloChat v2.0 — Enhanced
 
-**Current Limitations**:
-- No OAuth/social login
-- No 2FA/MFA
-- Password hashing is weak (MD5)
-- No account recovery options
-- No email-based actions (password reset link expiration)
+#### Auth Methods
+| Method | CodyChat | AlloChat v2.0 |
+|--------|---------|---------------|
+| Email + password | ✅ (MD5 — weak) | ✅ bcrypt + Convex Auth |
+| Google OAuth | ❌ | ✅ |
+| GitHub OAuth | ❌ | ✅ |
+| Apple Sign-In | ❌ | ✅ |
+| Phone OTP | ❌ | ✅ (Twilio) |
+| Magic link | ❌ | ✅ (email + SMS) |
+| Two-Factor (TOTP) | ❌ | ✅ + backup codes |
+| Guest accounts | ✅ | ✅ |
+| Passkeys (WebAuthn) | ❌ | ✅ (future) |
 
-### Enhanced SaaS Version (v2.0)
-**Auth Tech**: Convex Auth (Next.js integrated)
-
-**New Auth Methods**:
-- **Email + password** sign up/login (bcrypt + salt)
-- **Google OAuth** (single sign-on)
-- **GitHub OAuth** (for developer community)
-- **Phone OTP** (Twilio/MSG91 providers)
-- **Magic link** email login (passwordless)
-- **Magic link phone** SMS login (passwordless)
-- **Apple Sign-In** (iOS users)
-- **2FA/TOTP** (Time-based One-Time Password)
-- **Backup codes** for 2FA recovery
-
-**User Profile Fields**:
+#### Convex Auth Config
 ```typescript
-// convex/users.ts schema
-defineSchema({
-  users: defineTable({
-    // Auth
-    email: v.optional(v.string()),
-    phone: v.optional(v.string()),
-    passwordHash: v.optional(v.string()), // bcrypt
-    twoFactorEnabled: v.boolean(),
-    twoFactorSecret: v.optional(v.string()),
-    backupCodes: v.array(v.string()),
-    
-    // Profile
-    username: v.string(), // unique
-    displayName: v.string(),
-    avatar: v.optional(v.string()), // Cloudinary URL
-    bio: v.optional(v.string()),
-    pronouns: v.optional(v.string()),
-    customStatus: v.optional(v.string()),
-    
-    // Social
-    links: v.optional(v.object({
-      twitter: v.optional(v.string()),
-      instagram: v.optional(v.string()),
-      website: v.optional(v.string()),
-    })),
-    
-    // Presence
-    status: v.union(v.literal('online'), v.literal('away'), v.literal('offline')),
-    lastSeenAt: v.number(),
-    currentRoomId: v.optional(v.id('rooms')),
-    
-    // Settings
-    theme: v.union(v.literal('light'), v.literal('dark'), v.literal('system')),
-    language: v.string(), // ISO 639-1 code
-    notifications: v.object({
-      messageNotifications: v.boolean(),
-      callNotifications: v.boolean(),
-      presenceUpdates: v.boolean(),
-    }),
-    
-    // Account
-    emailVerified: v.boolean(),
-    phoneVerified: v.boolean(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }).index('byUsername', ['username']),
-});
-```
+// convex/auth.ts
+import { convexAuth } from '@convex-dev/auth/server';
+import { Password } from '@convex-dev/auth/providers/Password';
+import Google from '@auth/core/providers/google';
+import GitHub from '@auth/core/providers/github';
+import { ResendOTP } from '@convex-dev/auth/providers/ResendOTP';
+import { TwilioVerify } from '@convex-dev/auth/providers/TwilioVerify';
 
-**Implementation**:
-```typescript
-// lib/auth/config.ts (Convex Auth Configuration)
-import { defineAuth } from '@convex-dev/auth/server';
-import Password from '@convex-dev/auth/providers/Password';
-import Google from '@convex-dev/auth/providers/Google';
-import GitHub from '@convex-dev/auth/providers/GitHub';
-
-export const auth = defineAuth({
+export const { auth, signIn, signOut, store } = convexAuth({
   providers: [
-    Password,
+    Password({ profile(params) { return { email: params.email, name: params.name }; }}),
     Google,
     GitHub,
+    ResendOTP,      // Email OTP + magic link
+    TwilioVerify,   // Phone OTP
   ],
 });
+```
 
-// app/(auth)/sign-up/email/page.tsx
-export default function SignUpEmail() {
-  return (
-    <AuthForm
-      mode="signup"
-      providers={['email', 'google', 'github', 'phone']}
-      onSubmit={async (data) => {
-        const result = await signUpEmail(data);
-        redirect('/verify-email');
-      }}
-    />
-  );
-}
-
-// app/(auth)/verify-email/page.tsx
-export default function VerifyEmail() {
-  const [code, setCode] = useState('');
+#### User Schema
+```typescript
+users: defineTable({
+  // Auth
+  email: v.optional(v.string()),
+  phone: v.optional(v.string()),
+  emailVerified: v.boolean(),
+  phoneVerified: v.boolean(),
   
-  return (
-    <VerificationForm
-      title="Verify Your Email"
-      description="We sent a 6-digit code to your email"
-      onSubmit={async () => {
-        await verifyEmailOTP(code);
-        redirect('/app');
-      }}
-    />
-  );
-}
-```
-
----
-
-## 3. Room & Lobby System
-
-### Current Implementation (CodyChat 9.0)
-**Room Types**:
-- ✅ Public rooms (anyone can join)
-- ✅ Private rooms (invite-only, password protected)
-- ✅ Personal rooms (1-on-1)
-- ✅ Group rooms (multiple users)
-
-**Room Features**:
-- Room creation with name, description, avatar/icon
-- Room settings (public/private, password, max users)
-- Room history/logs
-- Room owner & moderators
-- Room pinned messages (basic)
-- Room announcements
-
-**Lobby System**:
-- Display list of active public rooms
-- Room count & user count display
-- Search rooms by name/keyword
-- Filter by category (optional)
-- Join/create room workflow
-
-**Current Limitations**:
-- No room categories
-- Limited room customization
-- No room privacy levels (public/private/community)
-- No room discovery algorithm
-
-### Enhanced SaaS Version (v2.0)
-
-**Room Features**:
-```typescript
-// convex/rooms.ts
-defineSchema({
-  rooms: defineTable({
-    name: v.string(),
-    description: v.optional(v.string()),
-    avatar: v.optional(v.string()), // Cloudinary
-    icon: v.optional(v.string()), // emoji or icon ID
-    
-    // Settings
-    isPublic: v.boolean(),
-    password: v.optional(v.string()), // bcrypt hashed
-    maxUsers: v.optional(v.number()),
-    category: v.string(), // 'gaming', 'music', 'language', 'general', etc.
-    language: v.optional(v.string()),
-    
-    // Access Control
-    ownerId: v.id('users'),
-    moderatorIds: v.array(v.id('users')),
-    bannedUserIds: v.array(v.id('users')),
-    mutedUserIds: v.array(v.object({
-      userId: v.id('users'),
-      muteExpiry: v.number(),
-    })),
-    
-    // Features
-    allowCallsOnly: v.boolean(), // no chat
-    requireVerification: v.boolean(),
-    requireAge: v.optional(v.number()), // 13+, 18+, etc.
-    
-    // Stats
-    memberCount: v.number(),
-    totalMessages: v.number(),
-    
-    // Metadata
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }).index('byCategory', ['category', 'isPublic']),
-});
-```
-
-**Lobby UI** (components/lobby/LobbyView.tsx):
-```typescript
-export function LobbyView() {
-  const [filter, setFilter] = useState('all');
-  const rooms = useQuery(api.rooms.getPublic, { 
-    category: filter === 'all' ? undefined : filter 
-  });
-
-  return (
-    <div className="lobby">
-      <LobbyHeader />
-      <div className="filters">
-        <CategoryTabs 
-          categories={['All', 'Gaming', 'Music', 'Language', 'General']}
-          onChange={setFilter}
-        />
-        <SearchBox placeholder="Search rooms..." />
-      </div>
-      <div className="room-grid">
-        {rooms?.map((room) => (
-          <RoomCard 
-            key={room._id}
-            room={room}
-            onJoin={() => joinRoom(room._id)}
-          />
-        ))}
-      </div>
-      <CreateRoomButton />
-    </div>
-  );
-}
-```
-
----
-
-## 4. Calling Features
-
-### Current Implementation (CodyChat 9.0)
-**Call Types**:
-- ✅ 1-on-1 video calls
-- ✅ 1-on-1 audio calls
-- ✅ Group video calls
-- ✅ Group audio calls
-
-**Call Control**:
-- Initiate call (incoming/outgoing)
-- Answer/reject/end call
-- Mute/unmute microphone
-- Enable/disable video
-- Screen sharing (optional with Agora/LiveKit)
-- Call recording (basic)
-
-**Call Signaling**:
-- Agora SDK integration (alternative: LiveKit WebRTC)
-- WebRTC peer connection
-- Call state tracking (ringing, connected, ended)
-- Call history/logs
-
-**Current Limitations**:
-- Single provider (Agora or LiveKit, configuration required)
-- No call quality metrics
-- Limited bandwidth optimization
-- No call transcription
-
-### Enhanced SaaS Version (v2.0)
-**Call Infrastructure**: LiveKit WebRTC + Token generation in Convex
-
-```typescript
-// convex/calls.ts
-defineSchema({
-  calls: defineTable({
-    // Participants
-    initiatorId: v.id('users'),
-    participantIds: v.array(v.id('users')),
-    roomId: v.optional(v.id('rooms')), // if group call in room
-    
-    // Call State
-    callType: v.union(
-      v.literal('audio'),
-      v.literal('video'),
-      v.literal('screen')
-    ),
-    isGroupCall: v.boolean(),
-    status: v.union(
-      v.literal('ringing'),
-      v.literal('connecting'),
-      v.literal('connected'),
-      v.literal('ended')
-    ),
-    
-    // LiveKit Related
-    liveKitRoomName: v.string(), // unique token per call
-    liveKitToken: v.optional(v.string()), // JWT token
-    
-    // Tracking
-    startedAt: v.optional(v.number()),
-    endedAt: v.optional(v.number()),
-    duration: v.optional(v.number()), // in seconds
-    
-    // Quality
-    recordingUrl: v.optional(v.string()), // S3/Cloudinary
-    transcriptionUrl: v.optional(v.string()),
-    metrics: v.optional(v.object({
-      avgLatency: v.number(),
-      packetLoss: v.number(),
-      avgBitrate: v.number(),
-    })),
-  }).index('byInitiator', ['initiatorId', 'startedAt']),
-});
-
-// Mutation to generate LiveKit tokens
-export const startCall = mutation({
-  args: {
-    targetUserId: v.optional(v.id('users')),
-    roomId: v.optional(v.id('rooms')),
-    callType: v.union(v.literal('audio'), v.literal('video')),
-  },
-  handler: async (ctx, { targetUserId, roomId, callType }) => {
-    const userId = await ctx.auth.getUserId();
-    
-    // Generate unique LiveKit room name
-    const liveKitRoomName = `call_${userId}_${Date.now()}`;
-    
-    // Generate LiveKit API token
-    const token = generateLiveKitToken({
-      roomName: liveKitRoomName,
-      identity: userId,
-    });
-    
-    const callId = await ctx.db.insert('calls', {
-      initiatorId: userId,
-      participantIds: targetUserId ? [targetUserId] : [],
-      roomId,
-      callType,
-      isGroupCall: !!roomId,
-      status: 'ringing',
-      liveKitRoomName,
-      liveKitToken: token,
-    });
-    
-    return { callId, liveKitToken: token, liveKitRoomName };
-  },
-});
-```
-
-**Call UI** (components/call/LiveCallScreen.tsx):
-```typescript
-import { LiveKitRoom, VideoConference } from '@livekit/components-react';
-
-export function LiveCallScreen({ callId }: { callId: string }) {
-  const call = useQuery(api.calls.getById, { callId });
-  
-  return (
-    <LiveKitRoom
-      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
-      token={call?.liveKitToken}
-      roomName={call?.liveKitRoomName}
-      connect
-      audio
-      video
-    >
-      <VideoConference />
-      <CallControls callId={callId} />
-      <CallQualityDisplay callId={callId} />
-    </LiveKitRoom>
-  );
-}
-```
-
----
-
-## 5. User Profile & Personalization
-
-### Current Implementation (CodyChat 9.0)
-- ✅ Profile picture/avatar (upload or Gravatar)
-- ✅ Display name
-- ✅ Bio/about section
-- ✅ Status message
-- ✅ User verification badge (optional)
-- ✅ Profile view (public/private)
-
-**Current Limitations**:
-- Limited customization options
-- No profile themes
-- No social links section
-- Basic profile fields
-
-### Enhanced SaaS Version (v2.0)
-
-**Profile Features**:
-```typescript
-// Ultra-enhanced profile system
-defineSchema({
-  userProfiles: defineTable({
-    userId: v.id('users'),
-    
-    // Basic
-    displayName: v.string(),
-    bio: v.optional(v.string()),
-    avatar: v.optional(v.string()), // Cloudinary
-    bannerImage: v.optional(v.string()),
-    customStatus: v.optional(v.string()),
-    statusEmoji: v.optional(v.string()),
-    pronouns: v.optional(v.string()),
-    
-    // Social & Links
-    socialLinks: v.array(v.object({
-      platform: v.string(), // 'twitter', 'instagram', 'youtube', etc.
-      url: v.string(),
-      verified: v.boolean(),
-    })),
-    website: v.optional(v.string()),
-    
-    // Interests & Tags
-    interests: v.array(v.string()), // ['gaming', 'music', 'coding']
-    languages: v.array(v.string()),
-    
-    // Profile Customization
-    theme: v.string(), // color scheme
-    badges: v.array(v.object({
-      badgeId: v.id('badges'),
-      earnedAt: v.number(),
-    })),
-    
-    // Stats & Achievements
-    totalCallTime: v.number(),
-    roomsCreated: v.number(),
-    friendCount: v.number(),
-    
-    // Privacy Settings
-    isProfilePublic: v.boolean(),
-    showEmail: v.boolean(),
-    showPhone: v.boolean(),
-    showLastSeen: v.boolean(),
-    
-    // Verification
-    isVerified: v.boolean(), // admin verified
-    verificationMethod: v.optional(v.string()), // email, phone, etc.
-  }).index('byUserId', ['userId']),
-});
-```
-
-**Profile Page** (app/(app)/profile/[userId]/page.tsx):
-```typescript
-export default function ProfilePage({ params }: { params: { userId: string } }) {
-  const user = useQuery(api.users.getById, { userId: params.userId });
-  const profile = useQuery(api.userProfiles.getByUserId, { 
-    userId: params.userId 
-  });
-  
-  return (
-    <div className="profile-page">
-      <ProfileHeader 
-        user={user}
-        profile={profile}
-        onEditProfile={canEdit}
-      />
-      <ProfileStats user={user} />
-      <ProfileBadges badges={profile?.badges} />
-      <ProfileInterests interests={profile?.interests} />
-      <SocialLinks links={profile?.socialLinks} />
-      <RecentActivity userId={params.userId} />
-    </div>
-  );
-}
-```
-
----
-
-## 6. Gamification System
-
-### Current Implementation (CodyChat 9.0)
-**Features**:
-- ✅ Level system (user XP points)
-- ✅ Badge/achievement system
-- ✅ Leaderboard (local & global)
-- ✅ User ranking (visual rank display)
-- ✅ Gift/tip system (with wallet)
-
-**Current Limitations**:
-- Basic point calculation
-- Limited achievement types
-- No reward milestones
-- Leaderboard only sorts by points
-
-### Enhanced SaaS Version (v2.0)
-
-```typescript
-// convex/gamification.ts
-defineSchema({
-  // User Experience & Levels
-  userXP: defineTable({
-    userId: v.id('users'),
-    totalXP: v.number(),
-    currentLevel: v.number(),
-    xpToNextLevel: v.number(),
-    currentXP: v.number(),
-    updatedAt: v.number(),
-  }).index('byXP', ['totalXP']),
-
-  // Achievements / Badges
-  badges: defineTable({
-    name: v.string(),
-    description: v.string(),
-    icon: v.string(), // emoji or URL
-    condition: v.string(), // 'first_call', 'level_10', '100_messages', etc.
-    rarity: v.union(
-      v.literal('common'),
-      v.literal('uncommon'),
-      v.literal('rare'),
-      v.literal('epic'),
-      v.literal('legendary')
-    ),
-    xpReward: v.number(), // XP gained on unlock
-  }),
-
-  // User Badges (earned)
-  userBadges: defineTable({
-    userId: v.id('users'),
-    badgeId: v.id('badges'),
-    unlockedAt: v.number(),
-    progress: v.optional(v.number()), // 0-100 for partial badges
-  }).index('byUserId', ['userId']),
-
-  // Leaderboards
-  leaderboards: defineTable({
-    type: v.union(
-      v.literal('global_xp'),
-      v.literal('weekly_messages'),
-      v.literal('monthly_calls'),
-      v.literal('room_members'),
-      v.literal('friends')
-    ),
-    userId: v.id('users'),
-    score: v.number(),
-    rank: v.number(),
-    period: v.string(), // 'weekly', 'monthly', 'all_time'
-    updatedAt: v.number(),
-  }).index('byType', ['type', 'period', 'score']),
-
-  // Rewards & Streaks
-  streaks: defineTable({
-    userId: v.id('users'),
-    type: v.string(), // 'daily_login', 'weekly_messages', etc.
-    count: v.number(),
-    lastAwardedAt: v.number(),
-    expiresAt: v.number(),
-    multiplier: v.number(), // 1x, 2x, 5x XP bonus for long streaks
-  }),
-});
-```
-
-**XP & Leveling System**:
-```typescript
-// mutations for XP gain
-export const addXP = mutation({
-  args: {
-    userId: v.id('users'),
-    amount: v.number(),
-    reason: v.string(),
-  },
-  handler: async (ctx, { userId, amount, reason }) => {
-    const userXP = await ctx.db
-      .query('userXP')
-      .withIndex('byUserId', (q) => q.eq('userId', userId))
-      .first();
-
-    const newTotalXP = (userXP?.totalXP ?? 0) + amount;
-    const newLevel = Math.floor(newTotalXP / 1000) + 1; // 1000 XP = 1 level
-
-    // Check for streak bonuses
-    const streak = await ctx.db
-      .query('streaks')
-      .filter((q) => q.eq(q.field('userId'), userId))
-      .first();
-    
-    const streakMultiplier = streak?.multiplier ?? 1;
-    const finalXP = amount * streakMultiplier;
-
-    // Update or create XP record
-    if (userXP) {
-      await ctx.db.patch(userXP._id, {
-        totalXP: newTotalXP,
-        currentLevel: newLevel,
-        currentXP: (userXP.currentXP + finalXP) % 1000,
-        updatedAt: Date.now(),
-      });
-    } else {
-      await ctx.db.insert('userXP', {
-        userId,
-        totalXP: newTotalXP,
-        currentLevel: newLevel,
-        currentXP: finalXP % 1000,
-        updatedAt: Date.now(),
-      });
-    }
-
-    // Check for badge unlocks
-    await checkBadgeUnlocks(ctx, userId);
-    
-    // Update leaderboards
-    await updateLeaderboards(ctx, userId);
-  },
-});
-```
-
-**Leaderboard Component** (components/gamification/Leaderboard.tsx):
-```typescript
-export function Leaderboard({ type = 'global_xp' }: { type: string }) {
-  const leaderboard = useQuery(api.gamification.getLeaderboard, { type });
-  
-  return (
-    <div className="leaderboard">
-      <h2>Global Leaderboard</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Player</th>
-            <th>Score</th>
-            <th>Badge</th>
-          </tr>
-        </thead>
-        <tbody>
-          {leaderboard?.map((entry, idx) => (
-            <LeaderboardRow 
-              key={entry.userId}
-              rank={idx + 1}
-              user={entry}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-```
-
----
-
-## 7. Chat Features & Content
-
-### Current Implementation (CodyChat 9.0)
-- ✅ Text messaging
-- ✅ Emoticons/emojis (library)
-- ✅ Giphy integration (GIF sharing)
-- ✅ YouTube video sharing (embed)
-- ✅ Gift sending (monetized)
-- ✅ Voice recording addon (record & send audio)
-- ✅ Drawing/paint addon (sketch & share)
-
-### Enhanced SaaS Version (v2.0)
-
-**Rich Media Support**:
-```typescript
-// convex/media.ts
-defineSchema({
-  mediaAttachments: defineTable({
-    messageId: v.id('messages'),
-    type: v.union(
-      v.literal('image'),
-      v.literal('video'),
-      v.literal('audio'),
-      v.literal('file'),
-      v.literal('giphy'),
-      v.literal('youtube'),
-      v.literal('spotify'),
-      v.literal('sketch')
-    ),
-    url: v.string(),
-    metadata: v.object({
-      width: v.optional(v.number()),
-      height: v.optional(v.number()),
-      duration: v.optional(v.number()),
-      title: v.optional(v.string()),
-      thumbnail: v.optional(v.string()),
-    }),
-    uploadedAt: v.number(),
-  }).index('byMessageId', ['messageId']),
-
-  // Gift store
-  gifts: defineTable({
-    name: v.string(),
-    icon: v.string(), // emoji or URL
-    price: v.number(), // in-app currency
-    category: v.string(), // 'love', 'funny', 'celebration', etc.
-  }),
-
-  // Gift transactions
-  giftTransactions: defineTable({
-    senderId: v.id('users'),
-    recipientId: v.id('users'),
-    giftId: v.id('gifts'),
-    timestamp: v.number(),
-    messageId: v.optional(v.id('messages')),
-  }).index('byRecipient', ['recipientId', 'timestamp']),
-});
-```
-
-**Rich Message Component** (components/chat/RichMessage.tsx):
-```typescript
-export function RichMessage({ message }) {
-  return (
-    <div className="message">
-      <MessageContent content={message.content} />
-      
-      {message.richContent && (
-        <RichTextRenderer blocks={message.richContent.blocks} />
-      )}
-      
-      {message.attachments?.map((attachment) => (
-        <MediaAttachment 
-          key={attachment._id}
-          attachment={attachment}
-        />
-      ))}
-      
-      {message.reactions && <ReactionRow reactions={message.reactions} />}
-    </div>
-  );
-}
-
-// Giphy integration
-export function GiphySelector({ onSelect }) {
-  const [query, setQuery] = useState('');
-  const [gifs, setGifs] = useState([]);
-
-  useEffect(() => {
-    if (query) {
-      fetch(`https://api.giphy.com/v1/gifs/search?q=${query}&api_key=${GIPHY_KEY}`)
-        .then((r) => r.json())
-        .then((d) => setGifs(d.data));
-    }
-  }, [query]);
-
-  return (
-    <div className="giphy-selector">
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search GIFs..."
-      />
-      <div className="gif-grid">
-        {gifs.map((gif) => (
-          <img
-            key={gif.id}
-            src={gif.images.fixed_height.url}
-            onClick={() => onSelect(gif)}
-            alt={gif.title}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Embedded drawing tool
-import DrawingBoard from 'react-drawingboard';
-
-export function SketchTool({ onSave }) {
-  return (
-    <DrawingBoard
-      width={300}
-      height={300}
-      onSave={onSave}
-    />
-  );
-}
-```
-
----
-
-## 8. Addon/Plugin System
-
-### Current Implementation (CodyChat 9.0)
-**Available Addons**:
-1. **Adnoyer** — Mark users as "annoyers" (block/flag)
-2. **Commandos** — Bot command system (/command) 
-3. **Giphy** — GIF search & embed
-4. **Paint It** — Drawing/sketch canvas
-5. **QuizBot** — Create & play quizzes
-6. **SuperBot** — AI/automated responses
-7. **VIP** — Premium membership levels
-8. **Voice Record** — Record & send audio messages
-9. **YouTube** — Embed YouTube videos
-
-**Plugin Architecture**:
-- Each addon has own DB table(s)
-- Addons can register custom UI components
-- System/admin can enable/disable per room
-
-### Enhanced SaaS Version (v2.0)
-
-**Plugin System**:
-```typescript
-// convex/plugins.ts
-defineSchema({
-  // Plugin registry
-  plugins: defineTable({
-    name: v.string(),
-    description: v.string(),
-    version: v.string(),
-    author: v.string(),
-    icon: v.string(),
-    category: v.string(), // 'game', 'productivity', 'media', 'entertainment'
-    enabled: v.boolean(),
-    
-    // Plugin code/config
-    configSchema: v.optional(v.any()), // JSON schema for plugin settings
-    permissions: v.array(v.string()), // ['messages.read', 'calls.access', etc.]
-    
-    // Metadata
-    installCount: v.number(),
-    rating: v.number(),
-    downloadUrl: v.string(),
-    documentationUrl: v.string(),
-    sourceUrl: v.optional(v.string()),
-  }),
-
-  // Room plugin settings
-  roomPluginSettings: defineTable({
-    roomId: v.id('rooms'),
-    pluginId: v.id('plugins'),
-    enabled: v.boolean(),
-    config: v.optional(v.any()),
-  }).index('byRoom', ['roomId']),
-
-  // User plugin preferences
-  userPluginPreferences: defineTable({
-    userId: v.id('users'),
-    pluginId: v.id('plugins'),
-    settings: v.optional(v.any()),
-    enabled: v.boolean(),
-  }).index('byUser', ['userId']),
-});
-
-// Plugin handler function
-export const executePluginCommand = action({
-  args: {
-    pluginId: v.id('plugins'),
-    command: v.string(),
-    args: v.optional(v.any()),
-  },
-  handler: async (ctx, { pluginId, command, args }) => {
-    // Load plugin code from URL
-    const plugin = await ctx.runQuery(api.plugins.getById, { pluginId });
-    
-    // Fetch plugin code
-    const code = await fetch(plugin.downloadUrl).then((r) => r.text());
-    
-    // Execute in isolated sandbox (using vm2 or similar)
-    const vm = new VM({ sandbox: { args, ctx } });
-    const result = vm.run(code);
-    
-    return result;
-  },
-});
-```
-
-**Marketplace UI** (app/(app)/plugins/marketplace/page.tsx):
-```typescript
-export default function PluginMarketplace() {
-  const plugins = useQuery(api.plugins.listAll, {});
-  const [installed, setInstalled] = useState(new Set());
-
-  return (
-    <div className="plugin-marketplace">
-      <h1>Plugin Marketplace</h1>
-      <div className="plugin-grid">
-        {plugins?.map((plugin) => (
-          <PluginCard
-            key={plugin._id}
-            plugin={plugin}
-            isInstalled={installed.has(plugin._id)}
-            onInstall={async () => {
-              await installPlugin(plugin._id);
-              setInstalled((prev) => new Set([...prev, plugin._id]));
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-```
-
----
-
-## 9. Admin Controls & Moderation
-
-### Current Implementation (CodyChat 9.0)
-**Moderation Features**:
-- ✅ Kick user from room
-- ✅ Ban user (global or room-specific)
-- ✅ Mute user (text or audio)
-- ✅ Ghost/invisibility (admin action)
-- ✅ IP banning
-- ✅ Content filtering/flagging
-- ✅ User permission levels
-- ✅ Admin console/logs
-- ✅ Contact management (reports)
-
-**Admin Dashboard**:
-- User management
-- Room management
-- Settings management
-- System logs
-- Ban/block lists
-- Permission tiers
-
-### Enhanced SaaS Version (v2.0)
-
-```typescript
-// convex/moderation.ts
-defineSchema({
-  // Moderation actions
-  moderationActions: defineTable({
-    actionType: v.union(
-      v.literal('kick'),
-      v.literal('ban'),
-      v.literal('mute'),
-      v.literal('warn'),
-      v.literal('suspend'),
-      v.literal('content_remove')
-    ),
-    targetUserId: v.id('users'),
-    moderatorId: v.id('users'),
-    roomId: v.optional(v.id('rooms')), // null = global
-    
-    // Details
-    reason: v.string(),
-    duration: v.optional(v.number()), // in milliseconds
-    expiresAt: v.optional(v.number()),
-    
-    // Audit trail
-    evidence: v.optional(v.string()), // message/content ID
-    appeal: v.optional(v.object({
-      status: v.string(), // 'pending', 'approved', 'denied'
-      message: v.string(),
-      submittedAt: v.number(),
-      reviewedAt: v.optional(v.number()),
-    })),
-    
-    createdAt: v.number(),
-  }).index('byTarget', ['targetUserId', 'actionType']),
-
-  // Content policy violations
-  contentViolations: defineTable({
-    messageId: v.id('messages'),
-    userId: v.id('users'),
-    violationType: v.string(), // 'spam', 'hate_speech', 'explicit', etc.
-    severity: v.union(
-      v.literal('low'),
-      v.literal('medium'),
-      v.literal('high'),
-      v.literal('critical')
-    ),
-    autoDetected: v.boolean(), // AI flagged vs manual
-    actionTaken: v.optional(v.string()),
-    flaggedAt: v.number(),
-  }).index('byMessage', ['messageId']),
-
-  // Permission overrides
-  permissionOverrides: defineTable({
-    userId: v.id('users'),
-    permission: v.string(), // 'can_create_rooms', 'can_monetize', etc.
-    granted: v.boolean(),
-    grantedBy: v.id('users'),
-    reason: v.optional(v.string()),
-    expiresAt: v.optional(v.number()),
-  }).index('byUser', ['userId']),
-});
-```
-
-**Moderation Dashboard** (app/(app)/admin/moderation/page.tsx):
-```typescript
-export default function ModerationDashboard() {
-  const pendingReports = useQuery(api.moderation.getPendingReports, {});
-  const recentActions = useQuery(api.moderation.getRecentActions, {});
-  
-  return (
-    <div className="moderation-dashboard">
-      <ModerationStats />
-      
-      <section className="pending-reports">
-        <h2>Pending Reports</h2>
-        <table>
-          <tbody>
-            {pendingReports?.map((report) => (
-              <ReportRow 
-                key={report._id}
-                report={report}
-                onAction={handleModerationAction}
-              />
-            ))}
-          </tbody>
-        </table>
-      </section>
-      
-      <section className="recent-actions">
-        <h2>Recent Moderation Actions</h2>
-        <ModerationTimeline actions={recentActions} />
-      </section>
-    </div>
-  );
-}
-```
-
----
-
-## 10. Payment & Monetization
-
-### Current Implementation (CodyChat 9.0)
-**Features**:
-- ✅ Wallet system (in-app currency)
-- ✅ Gift purchases
-- ✅ VIP membership tiers
-- ✅ Level-based rewards
-
-**Current Limitations**:
-- Basic payment processing (likely Stripe only)
-- No subscription support
-- Limited monetization options
-- No analytics on revenue
-
-### Enhanced SaaS Version (v2.0)
-
-```typescript
-// convex/payments.ts
-defineSchema({
-  // In-app currency & wallets
-  wallets: defineTable({
-    userId: v.id('users'),
-    balance: v.number(), // in cents
-    frozenBalance: v.number(), // pending transactions
-    currency: v.string(), // 'USD', 'INR', etc.
-    lastUpdatedAt: v.number(),
-  }).index('byUserId', ['userId']),
-
-  // Transaction log
-  walletTransactions: defineTable({
-    userId: v.id('users'),
-    type: v.union(
-      v.literal('purchase'),
-      v.literal('gift_send'),
-      v.literal('gift_receive'),
-      v.literal('subscription'),
-      v.literal('refund'),
-      v.literal('admin_adjustment')
-    ),
-    amount: v.number(),
-    description: v.string(),
-    relatedId: v.optional(v.string()), // order ID, transaction ID, etc.
-    status: v.union(
-      v.literal('pending'),
-      v.literal('completed'),
-      v.literal('failed'),
-      v.literal('refunded')
-    ),
-    metadata: v.optional(v.any()),
-    createdAt: v.number(),
-  }).index('byUser', ['userId', 'createdAt']),
-
-  // Subscriptions (VIP, Premium)
-  subscriptions: defineTable({
-    userId: v.id('users'),
-    tier: v.union(
-      v.literal('free'),
-      v.literal('premium'),
-      v.literal('vip'),
-      v.literal('elite')
-    ),
-    stripeSubscriptionId: v.optional(v.string()),
-    
-    // Dates
-    startDate: v.number(),
-    renewalDate: v.number(),
-    cancelledAt: v.optional(v.number()),
-    
-    // Benefits (stored for analytics)
-    benefits: v.array(v.string()),
-    
-    status: v.union(
-      v.literal('active'),
-      v.literal('cancelled'),
-      v.literal('expired')
-    ),
-  }).index('byUser', ['userId']),
-
-  // Subscription plans
-  subscriptionPlans: defineTable({
-    name: v.string(),
-    tier: v.string(),
-    price: v.number(), // monthly
-    currency: v.string(),
-    stripePriceId: v.string(),
-    
-    // Features
-    features: v.array(v.object({
-      name: v.string(),
-      enabled: v.boolean(),
-      limit: v.optional(v.number()),
-    })),
-    
-    order: v.number(), // for sorting/display
-  }),
-
-  // Revenue tracking
-  revenueEvents: defineTable({
-    type: v.string(), // 'subscription', 'gift', 'donation', 'commission'
-    userId: v.id('users'),
-    amount: v.number(),
-    currency: v.string(),
-    timestamp: v.number(),
-    metadata: v.optional(v.any()),
-  }).index('byTimestamp', ['timestamp']),
-});
-
-// Actions for Stripe webhook
-export const handleStripeWebhook = action({
-  args: { event: v.any() },
-  handler: async (ctx, { event }) => {
-    switch (event.type) {
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        await ctx.runMutation(api.payments.updateSubscription, {
-          userId: subscription.metadata.userId,
-          status: subscription.status,
-          renewalDate: subscription.current_period_end * 1000,
-        });
-        break;
-      }
-      case 'charge.succeeded': {
-        const charge = event.data.object;
-        await ctx.runMutation(api.payments.recordTransaction, {
-          userId: charge.metadata.userId,
-          amount: charge.amount,
-          type: 'purchase',
-          status: 'completed',
-        });
-        break;
-      }
-    }
-  },
-});
-```
-
----
-
-## 11. Infrastructure & Backend
-
-### Current Implementation (CodyChat 9.0)
-**Stack**:
-- MySQL database
-- Redis cache (optional)
-- Apache/Nginx server
-- PHP backend
-- jQuery frontend
-- Agora/LiveKit (WebRTC)
-- Session-based auth
-
-**Features**:
-- Multi-language support
-- Rate limiting
-- CSRF protection
-- File uploads (avatars, media)
-- Browser caching
-
-
-### Enhanced SaaS Version (v2.0)
-**Tech Stack**:
-- **Frontend**: Next.js 16 (App Router) + React 19 + Shadcn UI
-- **Backend**: Convex (real-time backend)
-- **Auth**: Convex Auth
-- **Real-time**: Convex subscriptions + LiveKit WebRTC
-- **Database**: Convex DB (PostgreSQL backend)
-- **Media**: Cloudinary (image/video hosting)
-- **Payments**: Stripe
-- **Deployment**: Vercel (frontend) + Convex (backend)
-
-```typescript
-// convex/schema.ts - Full database structure
-import { defineSchema, defineTable } from 'convex/server';
-import { v } from 'convex/values';
-
-export default defineSchema({
-  // Core
-  users: defineTable({ /* ... */ }),
-  userProfiles: defineTable({ /* ... */ }),
-  
-  // Messaging
-  messages: defineTable({ /* ... */ }),
-  mediaAttachments: defineTable({ /* ... */ }),
-  
-  // Calls
-  calls: defineTable({ /* ... */ }),
-  
-  // Rooms
-  rooms: defineTable({ /* ... */ }),
-  roomMembers: defineTable({ /* ... */ }),
+  // Profile
+  username: v.string(),                          // unique handle
+  displayName: v.string(),
+  avatar: v.optional(v.string()),                // Cloudinary URL
+  bannerImage: v.optional(v.string()),
+  bio: v.optional(v.string()),
+  pronouns: v.optional(v.string()),
+  customStatus: v.optional(v.string()),
+  statusEmoji: v.optional(v.string()),
   
   // Social
-  friendships: defineTable({ /* ... */ }),
-  blockedUsers: defineTable({ /* ... */ }),
+  socialLinks: v.optional(v.array(v.object({
+    platform: v.string(),
+    url: v.string(),
+    verified: v.boolean(),
+  }))),
   
-  // Gamification
-  userXP: defineTable({ /* ... */ }),
-  badges: defineTable({ /* ... */ }),
-  userBadges: defineTable({ /* ... */ }),
-  leaderboards: defineTable({ /* ... */ }),
+  // Presence
+  presenceStatus: v.union(
+    v.literal('online'), v.literal('away'),
+    v.literal('busy'), v.literal('offline')
+  ),
+  lastSeenAt: v.number(),
+  currentRoomId: v.optional(v.id('rooms')),
+  
+  // Settings
+  theme: v.union(v.literal('light'), v.literal('dark'), v.literal('system')),
+  language: v.string(),
+  notifications: v.object({
+    messages: v.boolean(),
+    calls: v.boolean(),
+    mentions: v.boolean(),
+    presence: v.boolean(),
+  }),
+  
+  // Roles & Plan
+  role: v.union(
+    v.literal('owner'), v.literal('admin'), v.literal('moderator'),
+    v.literal('staff'), v.literal('user'), v.literal('guest')
+  ),
+  subscriptionTier: v.union(
+    v.literal('free'), v.literal('premium'), v.literal('pro'), v.literal('elite')
+  ),
+  
+  // Stats
+  xp: v.number(),
+  level: v.number(),
+  
+  // GDPR & Compliance
+  consentGiven: v.boolean(),
+  consentAt: v.optional(v.number()),
+  minAge: v.optional(v.number()),
+  
+  // System
+  isBot: v.boolean(),
+  isBanned: v.boolean(),
+  banExpiry: v.optional(v.number()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+}).index('byUsername', ['username'])
+  .index('byEmail', ['email'])
+  .searchIndex('searchUsers', { searchField: 'username', filterFields: ['role'] }),
+```
+
+#### Auth Pages
+```
+app/(auth)/
+├── layout.tsx              # Centered card layout, AlloChat branding
+├── sign-in/page.tsx        # Method selector (email/phone/OAuth)
+├── sign-in/email/page.tsx  # Email + password login
+├── sign-in/phone/page.tsx  # Phone + OTP login
+├── sign-up/page.tsx        # Registration method selector
+├── sign-up/email/page.tsx  # Email registration form
+├── sign-up/phone/page.tsx  # Phone registration
+├── verify-email/page.tsx   # OTP input (6-digit)
+├── forgot-password/page.tsx # Reset flow step 1
+├── reset-password/page.tsx  # New password entry
+├── magic-link/page.tsx     # Auto-login from email link
+└── onboarding/page.tsx     # Post-signup multi-step wizard
+```
+
+---
+
+## 4. Room & Lobby System
+
+### CodyChat 9.0 — What It Had
+- Public + private rooms
+- Room owner, moderators
+- Password-protected rooms
+- Room icons/avatars
+- Room announcements (`room_news` field)
+- Room topic
+- Max user limit per room
+- Room history (configurable)
+- Lobby listing (optional, `use_lobby` setting)
+- Basic filtering
+- Kick, ban, mute within rooms
+- Room-level addon enable/disable
+- Bridge mode (connect two servers)
+
+### AlloChat v2.0 — Enhanced
+
+#### Room Types
+| Type | Description |
+|------|-------------|
+| `public` | Anyone can browse and join |
+| `private` | Invite-only |
+| `secret` | Not listed, link-only |
+| `community` | Verified community with moderation team |
+
+#### Room Schema
+```typescript
+rooms: defineTable({
+  name: v.string(),
+  slug: v.string(),                              // URL-friendly name
+  description: v.optional(v.string()),
+  avatar: v.optional(v.string()),
+  bannerImage: v.optional(v.string()),
+  icon: v.optional(v.string()),                  // emoji
+  
+  // Settings
+  type: v.union(v.literal('public'), v.literal('private'),
+    v.literal('secret'), v.literal('community')),
+  password: v.optional(v.string()),
+  maxUsers: v.optional(v.number()),
+  category: v.string(),                          // from room-categories.ts
+  language: v.optional(v.string()),
+  
+  // Features
+  allowCalls: v.boolean(),
+  allowMedia: v.boolean(),
+  requireVerification: v.boolean(),
+  minAge: v.optional(v.number()),
+  enabledAddons: v.array(v.string()),            // addon IDs
+  
+  // Ownership
+  ownerId: v.id('users'),
+  
+  // Discovery
+  tags: v.array(v.string()),
+  isVerified: v.boolean(),
+  isFeatured: v.boolean(),
+  
+  // Stats  
+  memberCount: v.number(),
+  onlineCount: v.number(),
+  totalMessages: v.number(),
+  
+  // System
+  topic: v.optional(v.string()),
+  announcement: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+}).index('byCategory', ['category', 'type'])
+  .index('byOwner', ['ownerId'])
+  .searchIndex('searchRooms', { searchField: 'name', filterFields: ['category', 'type'] }),
+
+roomMembers: defineTable({
+  roomId: v.id('rooms'),
+  userId: v.id('users'),
+  role: v.union(
+    v.literal('owner'), v.literal('admin'), v.literal('moderator'), v.literal('member')
+  ),
+  joinedAt: v.number(),
+  mutedUntil: v.optional(v.number()),
+  isBanned: v.boolean(),
+}).index('byRoom', ['roomId', 'role'])
+  .index('byUser', ['userId']),
+```
+
+#### Lobby & Discovery
+- Category grid (Gaming, Music, Language, Coding, General, Study...)
+- Real-time member count via Convex subscription
+- "Trending Now" section (rooms with fastest growth)
+- "Staff Picks" featured rooms
+- Advanced search with filters (category, language, members, age restriction)
+- Room previews (peek last 5 messages before joining)
+- Invite link generation with expiry
+
+#### Room Pages
+```
+app/(app)/
+├── lobby/page.tsx                  # Room discovery grid
+├── room/[roomId]/page.tsx          # Main chat view
+├── room/[roomId]/settings/page.tsx # Room admin panel
+└── room/[roomId]/members/page.tsx  # Member management
+```
+
+---
+
+## 5. Voice & Video Calling
+
+### CodyChat 9.0 — What It Had
+- Agora SDK (legacy) OR LiveKit integration
+- 1-on-1 video calls (`call.php`, `video_call.php`)
+- 1-on-1 audio calls (`call.php`, `audio_call.php`)
+- Group video calls (`group_call.php`, `group_video_call.php`)
+- Group audio calls (`group_audio_call.php`)
+- Call settings: max duration, cost in currency
+- Call end page (`call_end.php`, `end_call.php`)
+- No call quality metrics
+- No recording
+- No transcription
+- No screen sharing UI
+
+### AlloChat v2.0 — Enhanced
+
+#### Call Infrastructure: LiveKit WebRTC
+```typescript
+// convex/calls.ts
+calls: defineTable({
+  initiatorId: v.id('users'),
+  participantIds: v.array(v.id('users')),
+  roomId: v.optional(v.id('rooms')),
+  
+  type: v.union(v.literal('audio'), v.literal('video'), v.literal('screen')),
+  isGroup: v.boolean(),
+  status: v.union(
+    v.literal('ringing'), v.literal('connecting'),
+    v.literal('active'), v.literal('ended'), v.literal('missed')
+  ),
+  
+  // LiveKit
+  liveKitRoom: v.string(),
+  
+  // Timing
+  startedAt: v.optional(v.number()),
+  endedAt: v.optional(v.number()),
+  duration: v.optional(v.number()),
+  
+  // Quality
+  recordingEnabled: v.boolean(),
+  recordingUrl: v.optional(v.string()),
+  transcriptionUrl: v.optional(v.string()),
   
   // Monetization
-  wallets: defineTable({ /* ... */ }),
-  walletTransactions: defineTable({ /* ... */ }),
-  subscriptions: defineTable({ /* ... */ }),
+  costPerMinute: v.optional(v.number()),
+  totalCost: v.optional(v.number()),
+}).index('byInitiator', ['initiatorId'])
+  .index('byStatus', ['status']),
+```
+
+#### Call Features
+| Feature | CodyChat | AlloChat v2.0 |
+|---------|---------|---------------|
+| 1-on-1 video | ✅ | ✅ HD 720p+ |
+| 1-on-1 audio | ✅ | ✅ |
+| Group video | ✅ | ✅ Unlimited (plan-based) |
+| Group audio | ✅ | ✅ |
+| Screen sharing | ❌ | ✅ |
+| Recording | ❌ | ✅ Consent-based |
+| Transcription | ❌ | ✅ AI-powered |
+| Virtual backgrounds | ❌ | ✅ Blur + custom |
+| Noise cancellation | ❌ | ✅ AI-based |
+| Call quality metrics | ❌ | ✅ Latency, bitrate, loss |
+| Picture-in-picture | ❌ | ✅ |
+| Active speaker focus | ❌ | ✅ |
+| Reactions in call | ❌ | ✅ (emoji overlay) |
+
+#### Call Components
+```
+components/calls/
+├── IncomingCallDialog.tsx   # "User is calling..." with accept/reject
+├── LiveCallScreen.tsx       # Main call UI (LiveKit)
+├── CallControls.tsx         # Mute, camera, share, end
+├── ParticipantGrid.tsx      # Video layout modes (grid/spotlight)
+├── ParticipantTile.tsx      # Individual participant tile
+├── CallQualityBadge.tsx     # Signal strength display
+├── RecordingIndicator.tsx   # Visible recording status
+└── CallSummaryCard.tsx      # Post-call summary (duration, cost)
+```
+
+---
+
+## 6. User Profiles & Presence
+
+### CodyChat 9.0 — What It Had
+- Avatar upload (local server storage)
+- Cover photo / banner
+- Display name (changeable, with rank restrictions)
+- User bio/about text
+- User mood status
+- Custom name colors (solid, gradient, neon effects)
+- VIP badge system (via addon)
+- Custom fonts for usernames
+- Location info (country flag via geo detection)
+- User level (if enabled)
+- User wall (public post board)
+
+### AlloChat v2.0 — Enhanced
+
+```typescript
+userProfiles: defineTable({
+  userId: v.id('users'),
   
-  // Moderation
-  moderationActions: defineTable({ /* ... */ }),
-  contentViolations: defineTable({ /* ... */ }),
+  // Appearance
+  avatarStyle: v.string(),                       // custom avatar frame ID
+  nameColor: v.optional(v.string()),             // hex or gradient
+  nameEffect: v.optional(v.string()),            // 'solid'|'gradient'|'neon'|'animated'
+  profileTheme: v.optional(v.string()),          // color scheme ID
   
-  // Admin
-  apiKeys: defineTable({ /* ... */ }),
-  auditLogs: defineTable({ /* ... */ }),
-});
-
-// Schema indexes for performance
-export const indexes = {
-  messagesByRoom: 'messages.byRoomId',
-  usersByUsername: 'users.byUsername',
-  // ... more indexes
-};
+  // Bio
+  bio: v.optional(v.string()),
+  interests: v.array(v.string()),
+  languages: v.array(v.string()),
+  website: v.optional(v.string()),
+  
+  // Socials
+  socialLinks: v.array(v.object({
+    platform: v.string(),
+    url: v.string(),
+  })),
+  
+  // Achievements
+  showcasedBadges: v.array(v.id('badges')),      // up to 5 featured
+  
+  // Stats (denormalized for perf)
+  totalMessages: v.number(),
+  totalCallMinutes: v.number(),
+  friendCount: v.number(),
+  roomsOwned: v.number(),
+  
+  // Privacy
+  showLastSeen: v.boolean(),
+  showStats: v.boolean(),
+  allowFriendRequests: v.boolean(),
+  
+  // Verification
+  isVerified: v.boolean(),
+  verifiedBadge: v.optional(v.string()),         // 'creator'|'business'|'notable'
+}).index('byUserId', ['userId']),
 ```
 
-**Architecture Diagram**:
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Frontend (Vercel)                     │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │  Next.js 16 App Router + React 19 + Shadcn UI       │ │
-│  │  ├─ (auth) - Auth pages                             │ │
-│  │  ├─ (app) - Main app shell                          │ │
-│  │  │  ├─ chat/[roomId] - Chat interface               │ │
-│  │  │  ├─ calls - Call management                      │ │
-│  │  │  ├─ profile/[userId] - User profiles             │ │
-│  │  │  ├─ admin - Admin dashboard                      │ │
-│  │  │  └─ settings - Settings pages                    │ │
-│  │  └─ api - API routes (optional)                     │ │
-│  └─────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-                          ↕
-┌─────────────────────────────────────────────────────────┐
-│              Backend (Convex Cloud)                      │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │  Convex Real-time Backend                           │ │
-│  │  ├─ auth.ts - Authentication handlers              │ │
-│  │  ├─ messages.ts - Messaging mutations               │ │
-│  │  ├─ calls.ts - Call management                      │ │
-│  │  ├─ rooms.ts - Room CRUD                            │ │
-│  │  ├─ users.ts - User queries                         │ │
-│  │  ├─ gamification.ts - XP/badges/leaderboard         │ │
-│  │  ├─ payments.ts - Wallet/subscription handling      │ │
-│  │  ├─ moderation.ts - Moderation actions              │ │
-│  │  ├─ subscriptions.ts - Real-time subscriptions      │ │
-│  │  └─ http.ts - HTTP actions (webhooks)               │ │
-│  └─────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-                          ↕
-┌─────────────────────────────────────────────────────────┐
-│              External Services                          │
-│  ├─ LiveKit - WebRTC video/audio infrastructure        │ │
-│  ├─ Cloudinary - Image/video hosting & transformation  │ │
-│  ├─ Stripe - Payment processing & webhooks             │ │
-│  ├─ Sendgrid/Resend - Email notifications              │ │
-│  ├─ Twilio - SMS/phone verification                    │ │
-│  └─ Giphy API - GIF integration                        │ │
-└─────────────────────────────────────────────────────────┘
+#### Presence System
+```typescript
+presences: defineTable({
+  userId: v.id('users'),
+  status: v.union(v.literal('online'), v.literal('away'), v.literal('busy'), v.literal('offline')),
+  customMessage: v.optional(v.string()),
+  currentRoomId: v.optional(v.id('rooms')),
+  lastHeartbeat: v.number(),
+}).index('byUserId', ['userId'])
+  .index('byRoom', ['currentRoomId']),
 ```
 
 ---
 
-## Summary: Feature Comparison Matrix
+## 7. Gamification System
 
-| Feature | CodyChat 9.0 | AlloChat v2.0 | Improvement |
-|---------|-------------|-----------|------------|
-| **Real-time Messaging** | Basic AJAX polling | Convex WebSocket | 10x faster, real-time sync |
-| **Video Calling** | Agora SDK | LiveKit WebRTC + quality metrics | Better UX, call recording, analytics |
-| **Audio Calling** | Basic | Advanced with noise cancellation | Professional quality |
-| **Authentication** | Email + password | Multi-method (OAuth, magic link, 2FA) | More secure, flexible |
-| **User Profiles** | Basic fields | Rich profiles, badges, social links | Modern user experience |
-| **Gamification** | XP + badges | Advanced: streaks, tiers, achievements | More engaging |
-| **Chat Content** | Text + basic media | Rich text, reactions, threading | Feature-rich |
-| **Addons** | Plugin system (basic) | Modern marketplace with sandbox | Safer, more extensible |
-| **Moderation** | Manual actions | AI-assisted, appeals, weighted penalties | Scalable moderation |
-| **Monetization** | Wallet + gifts | Subscriptions + tiered benefits | Enterprise ready |
-| **Analytics** | Basic logs | Advanced dashboards + real-time metrics | Data-driven decisions |
-| **Performance** | Decent | Optimized: CDN, edge functions, caching | 5x faster |
-| **Scalability** | Shared hosting | Global edge, auto-scaling | Millions of users |
-| **Security** | Standard PHP | Modern auth, encryption, audit logs | SOC2 compliant |
+### CodyChat 9.0 — What It Had
+- Level/XP system (via `use_level` setting)
+- XP earned from: chat messages, private messages, gifts, wall posts
+- Level modes: configurable thresholds
+- Badge system (`use_badge` setting)
+- Badge thresholds: chat count, gift count, likes, friend count
+- Badges: Ruby (100 chats), Gold (5000 chats), Legendary (1000 chats)
+- Basic leaderboard (rank by level)
+- Currency: Ruby + Gold coins
+- Ruby/Gold earning delays
+
+### AlloChat v2.0 — Enhanced
+
+```typescript
+userXP: defineTable({
+  userId: v.id('users'),
+  totalXP: v.number(),
+  level: v.number(),
+  xpToNext: v.number(),
+  updatedAt: v.number(),
+}).index('byXP', ['totalXP']),
+
+badges: defineTable({
+  slug: v.string(),
+  name: v.string(),
+  description: v.string(),
+  icon: v.string(),
+  rarity: v.union(
+    v.literal('common'), v.literal('uncommon'), v.literal('rare'),
+    v.literal('epic'), v.literal('legendary'), v.literal('limited')
+  ),
+  category: v.string(),                         // 'chat'|'call'|'social'|'event'|'staff'
+  condition: v.string(),                        // machine-readable unlock condition
+  xpReward: v.number(),
+  isSecret: v.boolean(),
+  isLimited: v.boolean(),
+  availableUntil: v.optional(v.number()),
+}).index('byRarity', ['rarity']),
+
+userBadges: defineTable({
+  userId: v.id('users'),
+  badgeId: v.id('badges'),
+  unlockedAt: v.number(),
+  progress: v.optional(v.number()),
+}).index('byUser', ['userId']),
+
+streaks: defineTable({
+  userId: v.id('users'),
+  type: v.string(),
+  count: v.number(),
+  multiplier: v.number(),
+  lastAt: v.number(),
+  expiresAt: v.number(),
+}).index('byUser', ['userId']),
+
+leaderboards: defineTable({
+  type: v.string(),
+  period: v.string(),
+  userId: v.id('users'),
+  score: v.number(),
+  rank: v.number(),
+  updatedAt: v.number(),
+}).index('byTypeAndPeriod', ['type', 'period', 'score']),
+```
+
+#### XP Actions & Rewards
+| Action | XP Earned | Notes |
+|--------|-----------|-------|
+| Send room message | +1 XP | Capped at 100/day |
+| Send voice note | +3 XP | |
+| Complete call (1min) | +5 XP | Per minute |
+| Make a new friend | +10 XP | |
+| Send a gift | +5 XP | |
+| Daily login | +20 XP | Streak multiplier applies |
+| Week streak (7 days) | +200 XP | Bonus |
+| Create a room | +50 XP | Once |
+| Get room verified | +500 XP | Staff action |
+| Participate in event | Varies | Event-specific |
+
+#### Leaderboard Categories
+- Global XP (all-time, monthly, weekly)
+- Message count (weekly)
+- Call minutes (monthly)
+- Gift sending (all-time)
+- Most friends
+- Room owner popularity (by room members)
 
 ---
 
-## Next Steps
+## 8. Rich Chat Features
 
-1. **Phase 1**: Set up Convex schema + authentication
-2. **Phase 2**: Implement core messaging & real-time sync
-3. **Phase 3**: Build call infrastructure with LiveKit
-4. **Phase 4**: Create admin dashboard for moderation
-5. **Phase 5**: Implement monetization (subscriptions + wallet)
-6. **Phase 6**: Deploy to production (Vercel + Convex)
+### CodyChat 9.0 — What It Had
+- Text messaging with `nl2br` line breaks
+- Emoticons: 100+ custom emoticons (png/svg/gif/webp)
+- Giphy integration (addon)
+- YouTube video embed (addon)
+- Gift sending (with currency)
+- Voice recording (addon)
+- Drawing/sketch canvas (PaintIt addon)
+- Quote/reply (basic, via `allow_quote` setting)
+- URL preview embedding
+- Flood protection (configurable)
+- Word filter
+- Emoji shortcodes (`:smile:`, `:tongue:`, etc.)
+- OpenAI image moderation (v9.0 new feature)
+- File uploads: image, video, audio, zip
+- Color text formatting
+
+### AlloChat v2.0 — Enhanced
+
+#### Extended Media Support
+```typescript
+mediaAttachments: defineTable({
+  messageId: v.id('messages'),
+  type: v.union(
+    v.literal('image'), v.literal('video'), v.literal('audio'),
+    v.literal('file'), v.literal('giphy'), v.literal('youtube'),
+    v.literal('spotify'), v.literal('sketch'), v.literal('voiceNote'),
+    v.literal('sticker'), v.literal('poll')
+  ),
+  url: v.string(),
+  thumbnailUrl: v.optional(v.string()),
+  metadata: v.object({
+    width: v.optional(v.number()),
+    height: v.optional(v.number()),
+    duration: v.optional(v.number()),
+    title: v.optional(v.string()),
+    size: v.optional(v.number()),
+  }),
+  uploadedAt: v.number(),
+}).index('byMessage', ['messageId']),
+```
+
+#### New Chat Features
+- **Slash commands**: `/gif`, `/giphy`, `/youtube`, `/poll`, `/quiz`, `/clear`
+- **Polls**: Create embedded polls in chat
+- **Sticker packs**: Purchasable sticker collections
+- **AI suggestions**: "Smart replies" powered by AI
+- **Link previews**: Open Graph metadata preview cards
+- **Code blocks**: Syntax-highlighted code sharing
+- **LaTeX rendering**: Math formula support
+- **Invisible ink**: Messages revealed on hover (fun feature)
+- **Timed messages**: Auto-delete after N seconds
+- **Language auto-translate**: Inline translation button per message
 
 ---
 
-**Created**: 2026-03-19
-**Status**: Ready for Development
-**Tech Stack**: Next.js 16 + Shadcn + Convex + Convex Auth
+## 9. Addon & Plugin System
+
+### CodyChat 9.0 — 9 Built-In Addons
+| Addon | Function |
+|-------|---------|
+| **Adnoyer** | Flag users as "annoyers" — block + report |
+| **Commandos** | Bot command system (`/command` syntax) |
+| **Giphy** | GIF search and embed |
+| **PaintIt** | Canvas drawing tool, save & share sketch |
+| **QuizBot** | Create & host quizzes in room |
+| **SuperBot** | AI/automated response bot |
+| **VIP** | Premium membership tiers with badge |
+| **Voice Record** | Record & send audio messages |
+| **YouTube** | Embed YouTube videos inline |
+
+Each addon has: own DB tables, admin UI, room-level toggle, custom PHP components
+
+### AlloChat v2.0 — Plugin Architecture
+
+```typescript
+plugins: defineTable({
+  slug: v.string(),
+  name: v.string(),
+  description: v.string(),
+  version: v.string(),
+  author: v.string(),
+  authorId: v.optional(v.id('users')),
+  icon: v.string(),
+  category: v.string(),              // 'game'|'media'|'utility'|'social'|'bot'
+  
+  // Distribution
+  isFree: v.boolean(),
+  price: v.optional(v.number()),
+  downloadUrl: v.string(),
+  
+  // Permissions
+  requiredPermissions: v.array(v.string()),
+  
+  // Stats
+  installCount: v.number(),
+  rating: v.number(),
+  reviewCount: v.number(),
+  
+  // Status
+  isApproved: v.boolean(),
+  isFeatured: v.boolean(),
+}).index('byCategory', ['category', 'isApproved']),
+
+roomPlugins: defineTable({
+  roomId: v.id('rooms'),
+  pluginId: v.id('plugins'),
+  enabled: v.boolean(),
+  config: v.optional(v.any()),
+}).index('byRoom', ['roomId']),
+```
+
+#### Built-In AlloChat Plugins (v2.0)
+| Plugin | Enhanced Description |
+|--------|---------------------|
+| **AlloBot** | AI-powered smart bot (GPT-4/Claude), natural language commands |
+| **QuizRoom** | Full quiz game mode: timed, leaderboard, multiple choice |
+| **SketchBoard** | Collaborative whiteboard (multiple users draw together) |
+| **VoiceNote** | Voice messages with waveform visualization |
+| **GifSearch** | Giphy + Tenor integration with trending section |
+| **VideoClip** | YouTube + Vimeo + TikTok embed with auto-preview |
+| **MusicSync** | Spotify/Apple Music listening party (play in sync) |
+| **Polls** | Create polls with multiple options, real-time results |
+| **Trivia** | Daily trivia game, automatic scoring |
+
+---
+
+## 10. Moderation & Safety
+
+### CodyChat 9.0 — What It Had
+- Kick user from room (temp kick with page)
+- Ban user (global or IP ban)
+- Mute: text mute, room mute, microphone mute
+- Ghost mode (admin invisibility)
+- IP banning table (`boom_banned`)
+- Content filtering: word filter table (`boom_filter`)
+- Captcha (reCAPTCHA)
+- Flood protection (max messages per window)
+- Email filter
+- VPN detection
+- OpenAI image moderation (v9.0)
+- Admin console with logs
+
+### AlloChat v2.0 — Enhanced
+
+```typescript
+moderationActions: defineTable({
+  type: v.union(
+    v.literal('warn'), v.literal('mute'), v.literal('kick'),
+    v.literal('ban'), v.literal('suspend'), v.literal('contentRemove'),
+    v.literal('ipBan')
+  ),
+  targetId: v.id('users'),
+  moderatorId: v.id('users'),
+  roomId: v.optional(v.id('rooms')),
+  
+  reason: v.string(),
+  evidence: v.optional(v.string()),
+  duration: v.optional(v.number()),
+  expiresAt: v.optional(v.number()),
+  
+  appeal: v.optional(v.object({
+    status: v.string(),
+    message: v.string(),
+    submittedAt: v.number(),
+    reviewedAt: v.optional(v.number()),
+    reviewedBy: v.optional(v.id('users')),
+  })),
+  
+  isActive: v.boolean(),
+  createdAt: v.number(),
+}).index('byTarget', ['targetId', 'type', 'isActive']),
+
+reports: defineTable({
+  reporterId: v.id('users'),
+  targetId: v.id('users'),
+  contentId: v.optional(v.id('messages')),
+  reason: v.string(),
+  category: v.string(),              // 'spam'|'harassment'|'explicit'|'hate'|'impersonation'
+  status: v.union(
+    v.literal('pending'), v.literal('reviewing'), v.literal('resolved'), v.literal('dismissed')
+  ),
+  evidence: v.optional(v.string()),
+  assignedTo: v.optional(v.id('users')),
+  resolvedAt: v.optional(v.number()),
+  createdAt: v.number(),
+}).index('byStatus', ['status', 'createdAt']),
+
+contentFilters: defineTable({
+  pattern: v.string(),
+  type: v.string(),               // 'word'|'regex'|'domain'
+  action: v.string(),             // 'block'|'flag'|'replace'
+  replacement: v.optional(v.string()),
+  severity: v.string(),
+}).index('byType', ['type']),
+```
+
+#### New Moderation Features
+- AI content moderation (OpenAI Moderation API extended)  
+- Real-time spam detection via message rate analysis
+- User trust score (community-based)
+- Auto-escalation for severe violations
+- Shadow ban (user doesn't know they're muted)
+- Community reporting with voting
+- GDPR deletion request handling
+- Appeal review workflow
+
+---
+
+## 11. Payment & Monetization
+
+### CodyChat 9.0 — What It Had
+- Wallet system: Ruby coins + Gold coins
+- Gift system (animated gifts, purchasable)
+- VIP membership (via addon, basic tiers)
+- Currency earn via time delay (Ruby delay, Gold delay)
+- Call cost (deduct from wallet per call)
+- Currency purchases (no built-in Stripe — basic)
+
+### AlloChat v2.0 — Full Monetization Stack
+
+```typescript
+wallets: defineTable({
+  userId: v.id('users'),
+  alloCoins: v.number(),             // main in-app currency (purchased)
+  starDust: v.number(),               // earned currency (activity-based)
+  frozenBalance: v.number(),
+  currency: v.string(),
+  updatedAt: v.number(),
+}).index('byUser', ['userId']),
+
+subscriptions: defineTable({
+  userId: v.id('users'),
+  tier: v.union(
+    v.literal('free'), v.literal('premium'), v.literal('pro'), v.literal('elite')
+  ),
+  stripeSubscriptionId: v.optional(v.string()),
+  stripeCustomerId: v.optional(v.string()),
+  status: v.union(v.literal('active'), v.literal('cancelled'), v.literal('expired'), v.literal('trialing')),
+  startDate: v.number(),
+  renewalDate: v.number(),
+  cancelAt: v.optional(v.number()),
+  benefits: v.array(v.string()),
+}).index('byUser', ['userId']),
+
+gifts: defineTable({
+  slug: v.string(),
+  name: v.string(),
+  icon: v.string(),
+  animationType: v.string(),          // 'static'|'animated'|'3d'|'ai'
+  category: v.string(),
+  coinPrice: v.number(),
+  isLimited: v.boolean(),
+  availableUntil: v.optional(v.number()),
+}).index('byCategory', ['category']),
+
+giftTransactions: defineTable({
+  senderId: v.id('users'),
+  recipientId: v.id('users'),
+  giftId: v.id('gifts'),
+  messageId: v.optional(v.id('messages')),
+  personalMessage: v.optional(v.string()),
+  coinAmount: v.number(),
+  createdAt: v.number(),
+}).index('byRecipient', ['recipientId', 'createdAt']),
+```
+
+#### Subscription Tier Features
+| Feature | Free | Premium ($4.99) | Pro ($9.99) | Elite ($24.99) |
+|---------|------|-----------------|-------------|----------------|
+| Ad-free | ❌ | ✅ | ✅ | ✅ |
+| Message history | 6 months | 2 years | 5 years | Unlimited |
+| Rooms own | 1 | 10 | 50 | Unlimited |
+| Group call limit | 10 | 50 | 100 | Unlimited |
+| Custom status | Static | ✅ Animated | ✅ | ✅ + emoji |
+| AlloCoins bonus | 0 | +10%/purchase | +25% | +50% |
+| Priority support | ❌ | Email 48h | Email 24h | Live chat |
+| Custom domain | ❌ | ❌ | ❌ | ✅ |
+| API access | ❌ | ❌ | Limited | Full |
+
+---
+
+## 12. Notifications System
+
+### CodyChat 9.0 — What It Had
+- Real-time notifications via Redis pub/sub (if enabled)
+- Notification types: messages, calls, room actions
+- Email notifications via PHPMailer/SMTP
+- Browser notification bell (polling-based count)
+
+### AlloChat v2.0 — Enhanced
+
+```typescript
+notifications: defineTable({
+  userId: v.id('users'),
+  type: v.string(),                  // 'message'|'mention'|'call'|'friend'|'gift'|'system'|'achievement'
+  title: v.string(),
+  body: v.string(),
+  icon: v.optional(v.string()),
+  link: v.optional(v.string()),
+  isRead: v.boolean(),
+  createdAt: v.number(),
+}).index('byUser', ['userId', 'isRead', 'createdAt']),
+```
+
+#### Notification Channels
+| Channel | Method |
+|---------|--------|
+| In-app bell | Convex real-time subscription |
+| Push (web) | Web Push API + Service Worker |
+| Push (mobile) | Expo Push Notifications (future) |
+| Email | Resend (transactional) |
+| SMS | Twilio (opt-in) |
+
+---
+
+## 13. Admin Dashboard
+
+### CodyChat 9.0 — What It Had
+- Admin panel (`admin.php`)
+- User management (list, search, edit)
+- Room management
+- Settings management (all `$setting` values)
+- System logs
+- Ban/IP ban management
+- Word filter management
+- Addon management
+- Contact/report management
+- Rank management
+- Radio stream management
+
+### AlloChat v2.0 — Enhanced Admin
+
+```
+app/(app)/admin/
+├── dashboard/page.tsx         # KPI overview (DAU, revenue, calls)
+├── users/page.tsx             # User list + search + bulk actions
+├── users/[userId]/page.tsx    # User detail + actions
+├── rooms/page.tsx             # Room list management
+├── moderation/page.tsx        # Report queue + actions
+├── moderation/logs/page.tsx   # Full audit trail
+├── analytics/page.tsx         # Charts: retention, engagement, revenue
+├── billing/page.tsx           # Revenue dashboard
+├── plugins/page.tsx           # Marketplace management
+├── settings/page.tsx          # Global app settings
+├── content-filters/page.tsx   # Word/domain/regex filters
+└── announcements/page.tsx     # Global announcements
+```
+
+#### Admin Convex Functions
+```typescript
+// convex/admin.ts
+getAdminStats()
+  → { dau, mau, totalMessages, activeCalls, revenue }
+listUsers(filters, pagination)
+  → paginated user list with subscription info
+suspendUser(userId, reason, duration?)
+  → creates moderationAction + notifies user
+deleteUserData(userId)
+  → GDPR deletion (anonymize, remove personal data)
+configureSettings(settings)
+  → update global app config
+generateApiKey(label, permissions)
+  → create admin API key
+getAuditLogs(filters, pagination)
+  → full audit trail
+```
+
+---
+
+## 14. Infrastructure & Architecture
+
+### CodyChat 9.0 — Stack
+| Layer | Technology |
+|-------|-----------|
+| Language | PHP 8 |
+| Database | MySQL + Redis |
+| Auth | PHP Sessions + Cookies |
+| Real-time | Redis pub/sub + AJAX polling |
+| WebRTC | Agora SDK or LiveKit |
+| File storage | Local server |
+| Email | PHPMailer/SMTP |
+| Frontend | jQuery + vanilla CSS |
+| Deployment | Shared hosting / VPS |
+
+### AlloChat v2.0 — Stack
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| Frontend | Next.js 15 (App Router) + React 19 | SSR, streaming, RSC |
+| UI | Shadcn/ui + Tailwind CSS | Accessible, themeable |
+| Backend | Convex | Real-time, serverless, zero DevOps |
+| Auth | Convex Auth | Multi-provider, secure sessions |
+| Real-time | Convex subscriptions (WebSocket) | <100ms latency |
+| WebRTC | LiveKit | Enterprise calling |
+| Media | Cloudinary | CDN + transforms |
+| Payments | Stripe | Global processing |
+| Email | Resend | Reliable transactional |
+| SMS | Twilio | Verification + notifications |
+| Search | Convex full-text | Integrated, zero setup |
+| State | Zustand | Client app state |
+| Validation | Zod | Type-safe schemas |
+| Deployment | Vercel (FE) + Convex (BE) | Edge, global scale |
+
+---
+
+## 15. Custom New Features (v2.0 Only)
+
+These features don't exist in CodyChat 9.0 at all:
+
+### 🆕 Social Graph
+- Friend system (send/accept/decline requests)
+- Follow system (public profiles)
+- Mutual friends display
+- Block list management
+- "Find friends by contacts" (phone contacts sync)
+
+### 🆕 Discover Feed
+- Personalized room recommendations (based on interests)
+- Trending content feed
+- "For You" algorithm (activity-based)
+
+### 🆕 Events System
+```typescript
+events: defineTable({
+  title: v.string(),
+  description: v.string(),
+  hostId: v.id('users'),
+  roomId: v.optional(v.id('rooms')),
+  type: v.string(),           // 'live'|'game'|'quiz'|'watch_party'
+  startsAt: v.number(),
+  endsAt: v.number(),
+  maxAttendees: v.optional(v.number()),
+  registrantIds: v.array(v.id('users')),
+  isPublic: v.boolean(),
+  xpReward: v.number(),
+}).index('byStart', ['startsAt']),
+```
+
+### 🆕 Watch Party
+- Sync YouTube/video playback across all room members
+- Real-time reaction overlays during video
+- Group playlist management
+
+### 🆕 Voice Rooms (Stage Mode)
+- Listen-only audience mode
+- Raise hand to speak
+- Moderator controls speaker rotation
+- Recording with auto-transcript
+
+### 🆕 AI Features (AlloAI)
+- Smart message summaries ("Catch up" when rejoining room)
+- Auto-moderation suggestions
+- Translation assistance
+- Chatbot companion per room
+- Smart reply suggestions
+
+### 🆕 Mobile PWA
+- Full offline mode (cached messages)
+- Push notifications via service worker
+- Install prompt for home screen
+- Camera/mic direct from mobile
+
+### 🆕 Command Palette (⌘K)
+- Global search: rooms, users, messages
+- Quick actions: create room, start call, DM user
+- Navigate to any page instantly
+- Recent history
+
+---
+
+## 16. Feature Comparison Matrix
+
+| Feature / System | CodyChat 9.0 | AlloChat v2.0 | Improvement |
+|-----------------|-------------|---------------|-------------|
+| Real-time transport | AJAX polling (3s) | WebSocket (<100ms) | 30x faster |
+| Auth methods | Email only | 7+ methods (OAuth, OTP, magic link) | Secure + flexible |
+| Password security | MD5 | bcrypt + Convex Auth | Industry standard |
+| Video calling | Agora SDK | LiveKit HD WebRTC | Recording, metrics, noise cancel |
+| Message editing | ❌ | ✅ | Standard messaging UX |
+| Emoji reactions | ❌ | ✅ | Engagement boost |
+| Message search | MySQL LIKE | Convex full-text index | 100x faster |
+| Rich text | ❌ | ✅ Markdown + code | Developer-friendly |
+| Gamification | Basic XP/badges | Advanced: streaks, tiers, events | More engaging |
+| Moderation | Manual | AI-assisted + appeals | Scalable |
+| Monetization | Wallet + gifts | Subscriptions + gifts + API | Enterprise-ready |
+| Addons | 9 built-in | Marketplace (open ecosystem) | Extensible |
+| Notifications | Polling | Real-time + push + email + SMS | Complete |
+| Analytics | Basic logs | Full dashboard + metrics | Data-driven |
+| Internationalization | Multi-language files | i18next + 10+ languages | Global reach |
+| Mobile | Responsive HTML | PWA + native (planned) | Mobile-first |
+| Deployment | Shared hosting | Vercel + Convex edge | 99.99% uptime |
+| Security | MD5, PHP sessions | bcrypt, Convex Auth, RBAC, audit logs | SOC2 level |
+| Social features | Basic friends | Full social graph + events | Community platform |
+| AI features | Image moderation | SmartChat + translation + AI bot | Next-gen |
+
+---
+
+*Last Updated: March 19, 2026 | AlloChat v2.0 | Stack: Next.js + Shadcn + Convex + Convex Auth*

@@ -2,42 +2,37 @@
 
 ## Background
 
-AlloChat v2.0 is a modern rebuild of CodyChat 9.0 (legacy PHP application) as a **SaaS global chat and calling platform**. The tech stack is **Next.js 16** (App Router) + **Shadcn UI** + **Convex** (real-time backend) + **Convex Auth**.
-
-The codebase currently has only the bare Next.js skeleton with Shadcn components installed. Everything below is net-new work migrating from the legacy PHP backend to a modern serverless architecture.
+AlloChat v2.0 is a complete, modern rebuild of **CodyChat 9.0** (legacy PHP + MySQL platform) as a **SaaS global chat and calling platform**. The tech stack is **Next.js 15** (App Router) + **Shadcn UI** + **Convex** (real-time backend) + **Convex Auth**.
 
 **Key design principles:**
-- All configurable strings/labels live in `.ts` data files — ready for i18n and region updates.
-- Zero hardcoded secret keys — only `CONVEX_DEPLOYMENT` in env; API keys configured via Admin UI.
-- Full RBAC (Role-Based Access Control) with feature-visibility toggles configurable by Owner/Admin.
-- Architecture is multi-tenant SaaS-ready (organization-scoped from day one).
-- Real-time-first: Convex subscriptions power all live features (messaging, presence, calls).
-- Modern security: Convex Auth handles all authentication, bcrypt passwords, session management.
+- Real-time-first: Convex subscriptions power all live features (messaging, presence, calls)
+- All configurable strings live in `.ts` data files — i18n-ready from day one
+- Zero hardcoded secrets — only env variables; API keys via Admin UI
+- Full RBAC (Role-Based Access Control) with feature toggles configurable by Owner/Admin
+- Multi-tenant SaaS-ready architecture (organization-scoped from day one)
+- Premium UX: sub-100ms messaging, HD video, smooth animations
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Real-Time Transport** — The entire app uses **Convex real-time subscriptions** (WebSocket-based). This replaces the old polling model. Benefits: <100ms latency, automatic sync, zero DevOps. Confirm this is acceptable.
+> **Real-Time Transport** — The entire app uses **Convex real-time subscriptions** (WebSocket-based). This replaces the PHP AJAX polling model. Benefits: <100ms latency, automatic sync, zero DevOps. Old 3-second polling is eliminated.
 
 > [!IMPORTANT]
-> **LiveKit for WebRTC** — Video/audio calling runs on **LiveKit** (third-party managed service). Token generation happens server-side in Convex mutations. Pricing: $0.007 per min of video. Alternative: self-hosted Jitsi (higher ops complexity). Confirm LiveKit is acceptable.
+> **LiveKit for WebRTC** — Video/audio calling runs on **LiveKit** (third-party managed service). Token generation happens server-side in Convex actions. Pricing: ~$0.007/min video. Alternative: self-hosted Jitsi (higher ops complexity). Confirm LiveKit is acceptable.
 
 > [!IMPORTANT]
-> **Cloudinary for Media** — All images and videos uploaded by users are stored on **Cloudinary** (CDN + transform engine). Free tier covers 25GB/month. Alternatives: S3 + CloudFront (more setup). Confirm Cloudinary is acceptable.
+> **Cloudinary for Media** — All user-uploaded images and videos stored on **Cloudinary** (CDN + transform engine). Free tier: 25GB/month. Alternatives: S3 + CloudFront (more setup, more control). Confirm Cloudinary.
 
 > [!IMPORTANT]
-> **Multi-Language Support** — All UI strings are stored in `lib/i18n/` folder as `.ts` data files. i18next integration covers 10+ languages. Admin can translate via Settings UI or manually edit `.ts` files. Confirm this approach.
+> **Convex Auth** — Replaces PHP session/cookie auth. Handles all auth flows (email/password, OAuth, OTP, magic link) with built-in security. Sessions managed by Convex, tokens stored securely. Confirm approach.
 
 > [!WARNING]
-> **Convex Environment Variables** — The `CONVEX_DEPLOYMENT` URL and API keys must be set in `.env.local` for local dev and `.env.production` for production. These should NOT be committed to version control.
+> **Data Migration** — User data (MySQL → Convex) requires a one-time migration script. Passwords cannot be migrated (users must reset). Rooms, message history, and profiles can be bulk-imported. Confirm migration window.
 
 > [!NOTE]
-> **Build Order** — We'll build phase by phase and run `npm run dev` to smoke-test each major feature before moving on. Production build only at the end.
-
-> [!NOTE]
-> **Data Migration from CodyChat 9.0** — A separate migration script (`scripts/migrate-from-codychat.ts`) will export users, rooms, and messages from MySQL, then import into Convex via bulk import tool.
+> **Build Order** — Build phase by phase. Run `npx convex dev` + `npm run dev` and smoke-test each phase before advancing. Production build only at end.
 
 ---
 
@@ -45,531 +40,689 @@ The codebase currently has only the bare Next.js skeleton with Shadcn components
 
 ### Phase 1 — Foundation & Infrastructure
 
+---
+
 #### [MODIFY] [package.json](package.json)
 Add all required packages:
-- **Auth**: `@convex-dev/auth`, `bcryptjs`, `@types/bcryptjs`, `jsonwebtoken`
-- **Real-time**: `convex`, `@convex-dev/react` (zero-setup real-time hooks)
-- **Validation**: `zod`, `zod-form-data`
-- **UI**: Already installed (Shadcn, Tailwind)
-- **WebRTC**: `livekit-client`, `@livekit/components-react`
-- **Media**: `next-cloudinary`, `cloudinary`
-- **HTTP**: `axios`
-- **Notifications**: `react-toastify`
-- **Payments**: `@stripe/react-js`, `@stripe/js`
-- **i18n**: `i18next`, `react-i18next`, `i18next-browser-languagedetector`
-- **Utils**: `nanoid`, `date-fns`, `clsx`, `zustand` (state management)
+- `convex` + `@convex-dev/auth` — real-time backend + auth
+- `livekit-client` + `@livekit/components-react` — WebRTC calls
+- `next-cloudinary` + `cloudinary` — media hosting
+- `@stripe/stripe-js` + `stripe` — payments
+- `zod` — runtime validation
+- `zustand` — client state management
+- `date-fns` — date formatting
+- `nanoid` — ID generation
+- `react-hook-form` — form management
+- `i18next` + `react-i18next` — internationalization
+- `resend` — transactional email
+- `twilio` — SMS/phone OTP
 
-#### [NEW] [convex/schema.ts](convex/)
-Full Convex database schema covering:
-- **Auth tables**: `users`, `sessions`, `oauth_accounts`, `password_resets`
-- **User tables**: `user_profiles`, `presences`
-- **Messaging**: `messages`, `reactions`, `media_attachments`, `message_threads`
-- **Rooms**: `rooms`, `room_members`, `room_roles`, `room_settings`
-- **Calls**: `calls`, `call_participants`, `call_recordings`
-- **Social**: `friendships`, `blocked_users`, `follow_requests`
-- **Gamification**: `user_xp`, `badges`, `user_badges`, `leaderboards`, `streaks`
-- **Monetization**: `wallets`, `wallet_transactions`, `subscriptions`, `gifts`, `gift_transactions`
-- **Moderation**: `moderation_actions`, `content_violations`, `appeal_submissions`
-- **Addons**: `plugins`, `room_plugin_settings`, `user_plugin_preferences`
-- **Admin**: `audit_logs`, `analytics_events`, `api_keys`
+#### [NEW] [convex/schema.ts](convex/schema.ts)
+Full Convex database schema (see FLOWS_AND_APIS.md for complete schema):
+- **Auth**: `users`, `sessions`, `oauthAccounts`
+- **Profiles**: `userProfiles`, `presences`
+- **Messaging**: `messages`, `directMessages`, `conversations`, `mediaAttachments`
+- **Rooms**: `rooms`, `roomMembers`
+- **Calls**: `calls`
+- **Social**: `friendships`, `blockedUsers`
+- **Gamification**: `userXP`, `badges`, `userBadges`, `streaks`, `leaderboards`
+- **Monetization**: `wallets`, `walletTransactions`, `subscriptions`, `gifts`, `giftTransactions`
+- **Moderation**: `moderationActions`, `reports`, `contentFilters`
+- **Plugins**: `plugins`, `roomPlugins`
+- **Notifications**: `notifications`
+- **Admin**: `auditLogs`, `apiKeys`
+- **Events**: `events`
 
-#### [NEW] [convex/auth.ts](convex/)
+#### [NEW] [convex/auth.ts](convex/auth.ts)
 Convex Auth configuration:
-- Email + password sign-up/login
+- Email + password (bcrypt)
 - Google OAuth
-- GitHub OAuth
-- Phone OTP (via Twilio)
-- Magic link (passwordless email)
-- Session management helpers
-- 2FA/TOTP setup & verification
-- Password reset flow
+- GitHub OAuth  
+- Apple Sign-In
+- Phone OTP (Twilio)
+- Email OTP + magic link (Resend)
+- Session management
+- 2FA/TOTP support
 
-#### [NEW] [lib/i18n/](lib/)
-i18n configuration:
+#### [NEW] [lib/i18n/](lib/i18n/)
+i18n setup:
 - `config.ts` — i18next initialization
-- `en.ts` — English language strings
-- `es.ts`, `fr.ts`, `de.ts`, etc. — Other languages
-- `keys.ts` — Type-safe i18n key constants
+- `en.ts`, `ar.ts`, `es.ts`, `fr.ts`, `de.ts`, `pt.ts`, `ru.ts`, `zh.ts`, `hi.ts`, `tr.ts`
+- `keys.ts` — type-safe key constants
 
-#### [NEW] [lib/data/](lib/)
-Constants files — all editable `.ts` files, no hardcoding:
-- `room-categories.ts` — Room categories (gaming, music, language, etc.)
-- `subscription-plans.ts` — FREE / PREMIUM / PRO / ENTERPRISE features
-- `permissions.ts` — Resource × action permission matrix
-- `roles.ts` — Role definitions (Owner, Admin, Moderator, User, Guest)
-- `badge-definitions.ts` — Badge types & unlock conditions
-- `error-messages.ts` — Localized error strings
-- `nav-items.ts` — Sidebar navigation with permissions
+#### [NEW] [lib/data/](lib/data/)
+All constants as editable `.ts` files:
+- `room-categories.ts` — Room categories with icons and colors
+- `subscription-plans.ts` — Free/Premium/Pro/Elite feature lists
+- `permissions.ts` — Permission matrix (resource × action × role)
+- `roles.ts` — Role hierarchy definitions
+- `badge-definitions.ts` — All badge types and unlock conditions
+- `xp-actions.ts` — XP reward amounts per action
+- `gift-catalog.ts` — Gift catalog data
+- `nav-items.ts` — Sidebar navigation filtered by permissions
 
-#### [NEW] [lib/convex.ts](lib/)
-Convex client singleton + hooks:
-```typescript
-export const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-export function useConvex() { return useContext(ConvexContext); }
-```
-
-#### [NEW] [lib/auth/](lib/auth/)
-Auth helpers:
-- `session.ts` — Current user query, session validation
-- `permissions.ts` — Role-based permission checks
-- `oauth.ts` — OAuth configuration (client IDs, redirects)
-- `password.ts` — bcrypt helpers (hash, compare, validate strength)
+#### [NEW] [lib/convex.ts](lib/convex.ts)
+Convex client singleton + utilities
 
 #### [NEW] [middleware.ts](middleware.ts)
 Next.js edge middleware:
-- Session cookie validation
-- Redirect unauthenticated users to `/auth/sign-in`
-- Route-level RBAC check using permission data
-- Tenant isolation (if multi-tenant later)
+- Session cookie validation via Convex Auth
+- Redirect unauthenticated → `/auth/sign-in`
+- Admin route protection
+- Rate limiting on auth endpoints
 
 ---
 
 ### Phase 2 — Authentication System
 
-All auth lives under `app/(auth)/` with its own layout (no sidebar).
+All auth pages live under `app/(auth)/` with centered card layout.
+
+---
 
 #### [NEW] `app/(auth)/layout.tsx`
-Centered card layout for auth pages with AlloChat branding.
+Full-screen auth layout with:
+- AlloChat logo + branding
+- Centered glassmorphism card
+- Background gradient animation
+- Dark/light mode support
 
-#### [NEW] `app/(auth)/sign-up/page.tsx`
-Method selector — Email / Phone / Google / GitHub cards.
+#### [NEW] `app/(auth)/sign-in/page.tsx`
+Method selector with animated cards for:
+- Email/password
+- Phone OTP
+- Google OAuth
+- GitHub OAuth
+
+#### [NEW] `app/(auth)/sign-in/email/page.tsx`
+- Email + password fields (with show/hide toggle)
+- "Remember me" checkbox
+- Forgot password link
+- Error states
 
 #### [NEW] `app/(auth)/sign-up/email/page.tsx`
-Full email + password signup form. Validates with Zod client-side via `react-hook-form`.
-- Name, email, password (strength indicator)
-- CAPTCHA integration (optional)
-- Terms & privacy acceptance checkbox
-- Error handling & retry
+- Name, email, password (strength indicator bar)
+- Age verification checkbox (COPPA)
+- Terms + privacy acceptance
+- reCAPTCHA optional
 
 #### [NEW] `app/(auth)/sign-up/phone/page.tsx`
-Phone entry → OTP screen.
-- Country code selector
-- Phone number input
-- OTP input (6 digits)
-- Resend link (with cooldown)
-
-#### [NEW] `app/(auth)/sign-in/page.tsx` + `email/` + `phone/`
-Login flows mirror signup.
+- Country code selector (with flag + dial code)
+- Phone number input with E.164 formatting
+- Send OTP button with cooldown timer
+- 6-digit OTP input (auto-advance)
 
 #### [NEW] `app/(auth)/verify-email/page.tsx`
-6-digit or 8-character code input using Shadcn `InputOTP` component.
-
-#### [NEW] `app/(auth)/forgot-password/page.tsx` + `reset-password/`
-Password reset flow:
-1. Email input
-2. OTP verification
-3. New password entry
-4. Confirmation
-
-#### [NEW] `app/(auth)/auth/magic-link/page.tsx`
-Magic link auto-login landing — extracts token from URL, logs in user, redirects to app.
+- Shadcn `InputOTP` component (6 digits)
+- Resend code with 60s cooldown
+- Auto-submit on completion
 
 #### [NEW] `app/(auth)/onboarding/page.tsx`
-Multi-step wizard (post-signup):
-1. Profile setup (avatar, display name, bio)
-2. Interests selection
-3. Create or join room (optional)
-4. Notification preferences
-5. Done → redirect to `/app`
+Multi-step wizard (5 steps):
+1. **Profile** — Display name, avatar upload, bio
+2. **Interests** — Tag multi-select (gaming, music, coding...)
+3. **Room** — Create first room OR browse & join
+4. **Notifications** — Permission opt-in  
+5. **Done** → redirect to `/app`
 
-#### [NEW] `convex/auth.ts`
-All auth mutations & queries:
-- `signUpEmail()` — Create user with email + password
-- `signUpPhone()` — Create user with phone + OTP
-- `signInEmail()` — Login with email + password
-- `signInPhone()` — Login with phone + OTP
-- `signInMagicLink()` — Generate & verify magic link
-- `signInOAuth()` — Handle OAuth callback
-- `requestPasswordReset()` — Send reset email
-- `resetPassword()` — Validate token + set new password
-- `getCurrentUser()` — Query current authenticated user
-- `setupTwoFactor()` — Generate TOTP secret
-- `verifyTwoFactor()` — Verify TOTP code
+#### [NEW] `convex/auth.ts` (mutations)
+- `signUp(email, password, name)` — Create user account
+- `signIn(email, password)` — Auth session
+- `signOut()` — Invalidate session
+- `sendOTP(phone)` — Trigger Twilio OTP
+- `verifyOTP(phone, code)` — Verify phone
+- `sendMagicLink(email)` — Send passwordless link
+- `resetPassword(token, newPassword)` — Password reset
+- `setupTOTP()` — Generate TOTP secret + QR code
+- `verifyTOTP(code)` — Verify 2FA code
+- `getCurrentUser()` — Current auth user query
 
 ---
 
 ### Phase 3 — Core Layout & Navigation
 
-#### [NEW] `app/(app)/layout.tsx`
-Main dashboard layout:
-- Shadcn `Sidebar` component (collapsible on mobile)
-- Top bar with breadcrumbs, search, notification bell, user menu, theme toggle
-- RBAC: only render nav items the user has `read` permission for
+---
 
-#### [NEW] `components/layout/`
-- `app-sidebar.tsx` — Sidebar sourcing nav from `lib/data/nav-items.ts` filtered by user's permissions
-- `top-bar.tsx` — Breadcrumb + search + bell + avatar
-- `theme-toggle.tsx` — Light/dark/system toggle button
-- `notification-bell.tsx` — Unread count badge + popover list
-- `command-palette.tsx` — ⌘K global search (users, rooms, messages)
-- `user-menu.tsx` — Profile, settings, logout
+#### [NEW] `app/(app)/layout.tsx`
+Main app shell:
+- Collapsible Shadcn Sidebar (desktop)
+- Bottom nav (mobile)
+- Top bar: breadcrumb, search, notifications bell, user menu
+- Theme toggle (light/dark/system)
+- Real-time presence heartbeat (every 30s)
+- Command palette ⌘K listener
+
+#### [NEW] `components/layout/AppSidebar.tsx`
+- Reads nav items from `lib/data/nav-items.ts`
+- Filters by user role + subscription tier
+- Shows active room in sidebar
+- Collapsible on mobile
+- Shows online friend count
+
+#### [NEW] `components/layout/CommandPalette.tsx`
+- ⌘K trigger
+- Search: rooms, users, messages, pages
+- Recent results history
+- Keyboard navigation
 
 ---
 
 ### Phase 4 — Real-Time Messaging Core
 
+---
+
 #### [NEW] `convex/messages.ts`
-Queries & mutations:
-- `sendMessage()` — Send text or rich message
-- `editMessage()` — Edit message content
-- `deleteMessage()` — Soft-delete message
-- `addReaction()` — Add emoji reaction
-- `removeReaction()` — Remove emoji reaction
-- `pinMessage()` — Pin message in room
-- `unpinMessage()` — Unpin message
-- `replyToMessage()` — Send threaded reply
-- `getAllMessages()` — Query all messages for a room (paginated)
-- `searchMessages()` — Full-text search across rooms
-- Subscription: `watchRoomMessages()` — Real-time message stream
+All message mutations + queries:
 
-#### [NEW] `app/(app)/chat/[roomId]/page.tsx`
-Main chat interface:
-- Message list (infinite scroll, latest at bottom)
-- Message input box (with rich text toolbar)
-- Room header (name, member count, call button)
-- Member sidebar (list of online users)
-- Typing indicator
-- Message reactions UI
-
-#### [NEW] `components/chat/`
-- `MessageBubble.tsx` — Single message display (text, media, reactions, actions)
-- `MessageList.tsx` — Scrollable message list with pagination
-- `MessageInput.tsx` — Text input + slash commands + emoji picker
-- `RichTextEditor.tsx` — Markdown/formatting toolbar
-- `ReactionPicker.tsx` — Emoji reaction selector
-- `TypingIndicator.tsx` — "User is typing..." animation
-- `ReadReceipts.tsx` — Show read status per user
-
-#### [NEW] `hooks/useRoomMessages.ts`
-Custom hook for real-time message subscription:
 ```typescript
-export function useRoomMessages(roomId: string) {
-  return useQuery(api.messages.getAllMessages, { roomId });
-}
+// Mutations
+sendMessage(roomId, content, replyTo?, attachments?)
+editMessage(messageId, newContent)
+deleteMessage(messageId)
+addReaction(messageId, emoji)
+removeReaction(messageId, emoji)
+pinMessage(messageId, roomId)  
+unpinMessage(messageId)
+markMessagesRead(roomId)
+sendDirectMessage(recipientId, content)
 
-export function useRoomMessagesSubscription(roomId: string) {
-  return useSubscription(api.messages.watchRoomMessages, { roomId });
-}
+// Queries
+listMessages(roomId, paginationOpts)        → paginated messages
+getPinnedMessages(roomId)                   → pinned messages
+searchMessages(query, roomId?)              → search results
+getDirectMessages(conversationId, opts)     → DM history
+getConversations()                          → all DM threads
+
+// Subscriptions (useQuery)
+watchMessages(roomId)                       → live message stream
+watchDMs(conversationId)                    → live DM stream
 ```
+
+#### [NEW] `app/(app)/room/[roomId]/page.tsx`
+Main chat view layout:
+- Left: room message list (infinite scroll)
+- Right: member panel (collapsible)
+- Bottom: message input with toolbar
+- Top: room header (name, member count, call button)
+
+#### [NEW] `components/chat/MessageInput.tsx`
+Rich input with:
+- Emoji picker button
+- GIF search (Giphy)
+- File attachment button (Cloudinary upload)
+- Slash command autocomplete (`/gif`, `/poll`, `/quiz`...)
+- @mention autocomplete
+- Formatting toolbar (bold, code, italic)
+- Voice message record button
+
+#### [NEW] `components/chat/MessageBubble.tsx`
+Single message rendering:
+- Text + rich text (markdown rendered)
+- Media attachments (lightbox for images/videos)
+- Giphy embed
+- YouTube embed card
+- Reaction row + add reaction button
+- Hover: edit/delete/reply/report actions
+- Reply-to reference card
+- System messages (join/leave/kick)
+- Gift notification display
 
 ---
 
 ### Phase 5 — Rooms & Lobby
 
+---
+
 #### [NEW] `convex/rooms.ts`
-Room CRUD + permissions:
-- `createRoom()` — Create public/private room
-- `updateRoom()` — Update settings
-- `deleteRoom()` — Soft-delete
-- `joinRoom()` — Add user to room
-- `leaveRoom()` — Remove user
-- `inviteUser()` — Send invite
-- `listPublicRooms()` — Browse lobby
-- `listMyRooms()` — Current user's rooms
-- `searchRooms()` — Full-text search
-- `kickUser()` — Moderator action
-- `banUser()` — Ban from room
-- Subscription: `watchRoomMembers()` — Online member count
+```typescript
+// Mutations
+createRoom(name, type, category, settings?)
+updateRoom(roomId, updates)
+deleteRoom(roomId)
+joinRoom(roomId, password?)
+leaveRoom(roomId)
+kickMember(roomId, targetId, reason)
+banMember(roomId, targetId, reason, duration?)
+muteMember(roomId, targetId, duration)
+promoteToModerator(roomId, targetId)
+inviteUser(roomId, userId)
+updateTopic(roomId, topic)
+postAnnouncement(roomId, text)
+
+// Queries
+getRoom(roomId)
+listPublicRooms(category?, sort?)           → paginated
+listMyRooms()
+searchRooms(query, filters)
+getFeaturedRooms()
+getRoomMembers(roomId)
+getRoomStats(roomId)
+
+// Subscriptions
+watchRoomPresence(roomId)                   → live member count + who's online
+```
 
 #### [NEW] `app/(app)/lobby/page.tsx`
-Lobby/discovery interface:
-- Room grid with filters (category, sort by activity)
-- Search bar
-- Create room button
-- Join room flow (password protected rooms)
+Discovery interface with:
+- Category filter tabs (scrollable on mobile)
+- Sort: Popular, New, Active, Trending
+- Search with instant results
+- Room cards: avatar, name, member count, online count, category badge
+- Featured rooms carousel at top
+- Create Room FAB button
 
-#### [NEW] `app/(app)/rooms/[roomId]/settings/page.tsx`
-Room admin panel (owner only):
-- Room name, description, avatar
-- Public/private toggle + password
-- Member management (list, remove, promote to mod)
-- Role management (custom roles in room)
-- Addon settings
+#### [NEW] `app/(app)/room/[roomId]/settings/page.tsx`
+Room admin panel:
+- Basic info (name, description, avatar, banner)
+- Privacy settings (type, password, max users)
+- Feature toggles (calls, media, pins)
+- Addons management
+- Member management table (promote, mute, ban, remove)
+- Danger zone (delete room)
 
 ---
 
-### Phase 6 — User Profiles
+### Phase 6 — User Profiles & Social
 
-#### [NEW] `convex/users.ts` & `convex/userProfiles.ts`
-User management:
-- `updateProfile()` — Update display name, bio, avatar, links
-- `getUserProfile()` — Query user by ID
-- `getUserByUsername()` — Query user by username
-- `getPublicProfile()` — Publicly visible fields only
-- `getPresence()` — Current online status
-- `setPresence()` — Update online status
-- Subscription: `watchPresence()` — Real-time presence
+---
+
+#### [NEW] `convex/users.ts`
+```typescript
+updateProfile(updates)
+getUserProfile(userId)
+getUserByUsername(username)
+setPresenceStatus(status, customMessage?)
+searchUsers(query)
+sendFriendRequest(targetId)
+acceptFriendRequest(requestId)
+declineFriendRequest(requestId)
+blockUser(targetId)
+unblockUser(targetId)
+getFriends()
+getFriendRequests()
+```
 
 #### [NEW] `app/(app)/profile/[userId]/page.tsx`
-Public user profile:
-- Avatar, name, level, badges
-- Bio, interests, social links
-- Statistics (total calls, messages, friend count)
-- Recent activity (last seen, active rooms)
-- Friend/block actions
-- Message button (start 1-on-1 chat)
+Public profile:
+- Avatar + banner header
+- Display name, pronouns, status
+- Level badge + XP bar
+- Showcased badges (up to 5)
+- Bio + interests + social links
+- Stats (messages, call minutes, friends)
+- Joined date, "last seen"
+- Friend/block/message action buttons
+- Recent rooms activity
 
-#### [NEW] `app/(app)/settings/profile/page.tsx`
-Edit own profile:
-- Avatar upload (Cloudinary)
-- Display name, bio, pronouns
-- Social links (Twitter, Instagram, etc.)
-- Interests multi-select
-- Language preference
-- Theme preference
+#### [NEW] `app/(app)/settings/` pages:
+- `profile/page.tsx` — Edit name, avatar, bio, pronouns
+- `social/page.tsx` — Social links, website
+- `privacy/page.tsx` — Profile visibility, last seen, friends
+- `notifications/page.tsx` — Channel preferences
+- `security/page.tsx` — Password, 2FA, sessions
+- `billing/page.tsx` — Subscription plan, invoices
+- `appearance/page.tsx` — Theme, language
 
 ---
 
-### Phase 7 — Video & Audio Calling
+### Phase 7 — Voice & Video Calling
+
+---
 
 #### [NEW] `convex/calls.ts`
-Call management:
-- `initiateCall()` — Start 1-on-1 or group call
-- `answerCall()` — Accept incoming call
-- `rejectCall()` — Reject call
-- `endCall()` — Terminate call
-- `getCallDetails()` — Query call info
-- `recordCall()` — Enable recording (if opted in)
-- Subscription: `watchCallStatus()` — Real-time call state
+```typescript
+startCall(targetUserId?, roomId?, type)     → { callId, liveKitToken }
+answerCall(callId)                          → { liveKitToken }
+rejectCall(callId)
+endCall(callId)
+generateToken(callId, userId)               → LiveKit JWT
+updateCallStatus(callId, status)
+getCallHistory(userId, opts)
+enableRecording(callId)
 
-#### [NEW] `lib/livekit.ts`
-LiveKit helpers:
-- `generateLiveKitToken()` — Create access token for user
-- `getMetrics()` — Query call quality metrics
-- `startRecording()` — Server-side recording webhook
+// Subscription
+watchCallStatus(callId)                     → live call state
+watchIncomingCalls()                        → notify when called
+```
 
-#### [NEW] `app/(app)/calls/[callId]/page.tsx`
-Live call screen using LiveKit:
+#### [NEW] `app/(app)/call/[callId]/page.tsx`
+Live call UI powered by LiveKit:
 ```typescript
 import { LiveKitRoom, VideoConference } from '@livekit/components-react';
 
-export function LiveCallScreen({ callId }: { callId: string }) {
-  const call = useQuery(api.calls.getCallDetails, { callId });
-  
-  return (
-    <LiveKitRoom
-      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
-      token={call?.liveKitToken}
-      roomName={call?.liveKitRoomName}
-      connect
-      audio
-      video
-    >
-      <VideoConference />
-      <CallControls callId={callId} />
-    </LiveKitRoom>
-  );
-}
+// Modes: grid (all equal), spotlight (active speaker large), sidebar (chat alongside)
 ```
 
 #### [NEW] `components/calls/`
-- `IncomingCallDialog.tsx` — "User is calling..." popup with accept/reject
-- `CallControls.tsx` — Mute, camera, end call buttons
-- `ParticipantGrid.tsx` — Video layout (grid, spotlight, sidebar)
-- `CallQualityIndicator.tsx` — Signal strength, latency badge
+- `IncomingCallDialog.tsx` — Modal with caller avatar + accept/reject
+- `CallControls.tsx` — Microphone, Camera, Screen share, End call
+- `ParticipantGrid.tsx` — Dynamic layout (grid/spotlight/strip)
+- `CallQualityBadge.tsx` — Signal quality display
+- `RecordingBadge.tsx` — Visible "Recording" indicator
+- `PictureInPicture.tsx` — Floating mini video while chatting
 
 ---
 
-### Phase 8 — Gamification System
+### Phase 8 — Gamification
+
+---
 
 #### [NEW] `convex/gamification.ts`
-XP, badges, leaderboards:
-- `addXP()` — Award XP for actions (message, call, etc.)
-- `unlockBadge()` — Check & award badges
-- `getLeaderboard()` — Query global/regional leaderboard
-- `getUserStats()` — XP, level, badges for user
-- `getStreak()` — Current activity streak
-- Subscription: `watchLeaderboard()` — Real-time rank updates
+```typescript
+awardXP(userId, amount, reason)             → level up check
+checkBadgeUnlocks(userId)                   → unlock eligible badges
+getLeaderboard(type, period, limit)
+getUserStats(userId)
+getStreak(userId)
+updateStreak(userId)
+claimStreakReward(userId)
+```
 
-#### [NEW] `app/(app)/gamification/leaderboard/page.tsx`
-Global leaderboard:
-- Top 100 users by XP
-- Filter by period (weekly, monthly, all-time)
-- Current user's rank highlighted
-- Streak multiplier display
+All XP actions integrated via Convex mutations:
+- Every `sendMessage` calls `awardXP(+1)`
+- Every `startCall` tracks duration → `awardXP(+5/min)`
+- Daily login via `updateStreak()`
 
 #### [NEW] `components/gamification/`
-- `UserLevel.tsx` — Display XP bar + level
-- `BadgeShowcase.tsx` — User's unlocked badges
-- `StreakBadge.tsx` — Current streak display
-- `LeaderboardTable.tsx` — Ranked user list
+- `XPProgressBar.tsx` — Animated level progress bar
+- `LevelBadge.tsx` — Level number display
+- `BadgeShowcase.tsx` — Up to 5 displayed badges
+- `StreakDisplay.tsx` — Flame icon + current streak count
+- `LeaderboardTable.tsx` — Ranked list with rank movement
+- `AchievementToast.tsx` — "Achievement unlocked!" popup
 
 ---
 
-### Phase 9 — In-App Purchases & Monetization
+### Phase 9 — Monetization & Payments
+
+---
 
 #### [NEW] `convex/payments.ts`
-Stripe + wallet system:
-- `createCheckoutSession()` — Generate Stripe link
-- `handleStripeWebhook()` — Process payment completion
-- `getWalletBalance()` — Current currency balance
-- `purchaseGift()` — Deduct balance, send gift
-- `getSubscriptionStatus()` — Check active subscription
-- `cancelSubscription()` — Unsubscribe from tier
+```typescript
+createCheckoutSession(planId, successUrl)   → Stripe URL
+handleStripeWebhook(event)                  → update subscriptions
+getWalletBalance()
+purchaseCoins(amount)
+sendGift(recipientId, giftId, message?)
+getGiftHistory(userId)
+getSubscriptionStatus()
+cancelSubscription()
+```
+
+#### [NEW] `convex/http.ts`
+```typescript
+// HTTP action for Stripe webhook
+export const httpRouter = httpRouter();
+httpRouter.route({
+  path: '/stripe-webhook',
+  method: 'POST',
+  handler: handleStripeWebhook,
+});
+```
 
 #### [NEW] `app/(app)/shop/page.tsx`
 Gift & cosmetics store:
-- Gift catalog (animated gifts, prices)
-- Cosmetics store (name colors, avatar frames)
-- Pass/battle pass (seasonal cosmetics)
-- Currency balance display
-- Purchase flow (Stripe modal)
+- Coin bundles (100, 500, 1000, 5000 AlloCoins)
+- Gift catalog (animated, 3D, seasonal limited)
+- Sticker packs
+- Name color effects
+- Avatar frames
 
-#### [NEW] `app/(app)/settings/billing/page.tsx`
-Subscription management:
-- Current plan display
-- Upgrade/downgrade options
-- Billing history
-- Invoice download
-- Cancellation button
-
----
-
-### Phase 10 — Moderation & Admin Dashboard
-
-#### [NEW] `convex/moderation.ts`
-Moderation actions:
-- `kickUser()` — Remove from room
-- `banUser()` — Ban from room (or global)
-- `muteUser()` — Prevent chat/voice
-- `reportContent()` — User report submission
-- `resolveReport()` — Moderator action on report
-- `appealAction()` — User appeal for mod action
-- `getAdminStats()` — Reports pending, actions today, etc.
-
-#### [NEW] `app/(app)/admin/moderation/page.tsx`
-Moderation queue:
-- Pending reports table (reporter, reported, reason, date)
-- Quick actions (dismiss, warn, mute, ban)
-- Report detail view with context
-- Appeal submissions (approve/deny)
-- Statistics (actions this week, etc.)
-
-#### [NEW] `app/(app)/admin/users/page.tsx`
-User management:
-- List all users (search, filter by plan)
-- User detail view (profile, activity, moderation history)
-- Bulk actions (export, send announcement)
-- Suspension/termination
-
-#### [NEW] `app/(app)/admin/analytics/page.tsx`
-Analytics dashboard:
-- DAU/MAU (daily/monthly active users)
-- Total messages & calls (with trends)
-- Revenue (MRR, subscriptions, purchases)
-- User retention curve
-- Most active rooms
+#### [NEW] `app/(app)/subscription/page.tsx`
+Plan upgrade:
+- Feature comparison table (Free vs Premium vs Pro vs Elite)
+- "Most Popular" badge on Pro
+- Stripe checkout integration
+- Trial period display
 
 ---
 
-### Phase 11 — Plugin/Addon Marketplace
+### Phase 10 — Plugin/Addon System
+
+---
 
 #### [NEW] `convex/plugins.ts`
-Plugin system:
-- `listPlugins()` — Browse marketplace
-- `installPlugin()` — Add to room or personal use
-- `uninstallPlugin()` — Remove
-- `getPluginConfig()` — Fetch settings
-- `executePluginAction()` — Run plugin command (sandboxed)
-- `ratePlugin()` — Leave review
+```typescript
+listPlugins(category?, installed?)
+getPlugin(pluginId)
+installPlugin(roomId, pluginId, config?)
+uninstallPlugin(roomId, pluginId)
+updatePluginConfig(roomId, pluginId, config)
+ratePlugin(pluginId, rating, review?)
+executePluginCommand(roomId, pluginId, cmd, args)
+```
 
 #### [NEW] `app/(app)/plugins/marketplace/page.tsx`
-Plugin marketplace UI:
-- Plugin cards (name, icon, rating, price)
-- Install/uninstall buttons
-- Filter by category
+- Search + category filter
+- Plugin cards: icon, rating, installs
+- Preview modal with screenshots
+- Install/uninstall with permission review
 
-#### [NEW] `app/(app)/plugins/my-plugins/page.tsx`
-Installed plugins management.
+---
+
+### Phase 11 — Moderation & Admin
+
+---
+
+#### [NEW] `convex/moderation.ts`
+```typescript
+reportContent(targetId, contentId?, reason, category)
+getModerationQueue(status?, assignedTo?)
+takeAction(reportId, action, reason, duration?)
+resolveReport(reportId, outcome)
+submitAppeal(actionId, message)
+reviewAppeal(appealId, outcome)
+banUser(userId, reason, duration?, isGlobal?)
+unbanUser(userId)
+updateContentFilter(pattern, action)
+testContentFilter(text)
+```
+
+#### [NEW] `app/(app)/admin/` pages
+Complete admin dashboard suite (see Phase 13 in FUNCTIONS.md)
 
 ---
 
 ### Phase 12 — Notifications
 
+---
+
 #### [NEW] `convex/notifications.ts`
-Notification system:
-- `sendNotification()` — Create notification
-- `getUnreadNotifications()` — Query bell count
-- `markAsRead()` — Clear unread
-- `getNotificationSettings()` — User preferences
-- Subscription: `watchNotifications()` — Real-time bell updates
+```typescript
+createNotification(userId, type, title, body, link?)
+markAsRead(notificationId)
+markAllRead()
+getUnread(userId)                           → for bell badge count
+deleteNotification(notificationId)
+updateNotificationSettings(settings)
+
+// Subscription
+watchNotifications()                        → live bell updates
+```
 
 #### [NEW] `components/notifications/`
-- `NotificationBell.tsx` — Icon + unread badge + dropdown
-- `NotificationItem.tsx` — Single notification (action button)
-- `NotificationCenter.tsx` — Full notification list page
+- `NotificationBell.tsx` — Icon, unread badge count, dropdown list
+- `NotificationItem.tsx` — Type icon, title, time, action button
+- `NotificationCenter.tsx` — Full page `/notifications`
 
 ---
 
-### Phase 13 — Security & Compliance
+### Phase 13 — Events System (New in v2.0)
+
+---
+
+#### [NEW] `convex/events.ts`
+```typescript
+createEvent(title, description, type, startsAt, endsAt, settings)
+updateEvent(eventId, updates)
+cancelEvent(eventId, reason)
+registerForEvent(eventId)
+cancelRegistration(eventId)
+getUpcomingEvents(filters)
+getEventAttendees(eventId)
+startEvent(eventId)
+endEvent(eventId, xpAward?)
+```
+
+---
+
+### Phase 14 — Security & Compliance
+
+---
 
 #### [NEW] `.env.local` (not committed)
-Secrets file with:
-- `NEXT_PUBLIC_CONVEX_URL` — Convex deployment URL
-- `CONVEX_DEPLOY_KEY` — Server-side Convex auth
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` — Stripe public key
-- `STRIPE_SECRET_KEY` — Stripe secret (server only)
-- `NEXT_PUBLIC_LIVEKIT_URL` — LiveKit room URL
-- `LIVEKIT_API_KEY` — LiveKit server auth
-- `LIVEKIT_API_SECRET` — LiveKit JWT signing
-- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` — Cloudinary account
-- `CLOUDINARY_API_KEY` — Cloudinary uploads
-- `NEXT_PUBLIC_GIPHY_API_KEY` — Giphy integration
-- `SENDGRID_API_KEY` — Email notifications
+```bash
+# Convex
+NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+CONVEX_DEPLOY_KEY=prod:xxxx
 
-#### [NEW] `middleware.ts`
-Security middleware:
-- CSRF token validation on mutations
-- Rate limiting on auth endpoints
-- Session validation
-- Request signing/verification
+# Auth
+AUTH_SECRET=random-secret-32-chars
 
-#### [NEW] `.gitignore` (update)
-Ensure no secrets are ever committed.
+# LiveKit
+NEXT_PUBLIC_LIVEKIT_URL=wss://your-app.livekit.cloud
+LIVEKIT_API_KEY=API...
+LIVEKIT_API_SECRET=...
+
+# Cloudinary
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=allochat
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Email (Resend)
+RESEND_API_KEY=re_...
+AUTH_EMAIL_FROM=noreply@allochat.app
+
+# SMS (Twilio)
+TWILIO_ACCOUNT_SID=AC...
+TWILIO_AUTH_TOKEN=...
+TWILIO_VERIFY_SID=VA...
+
+# AI
+OPENAI_API_KEY=sk-...
+GIPHY_API_KEY=...
+```
 
 ---
 
-## Core Directory Structure
+## Complete Directory Structure
 
 ```
 allochat/
 ├── app/
 │   ├── (auth)/
 │   │   ├── layout.tsx
-│   │   ├── sign-up/
 │   │   ├── sign-in/
-│   │   ├── verify-email/
-│   │   ├── forgot-password/
-│   │   └── onboarding/
+│   │   │   ├── page.tsx
+│   │   │   ├── email/page.tsx
+│   │   │   └── phone/page.tsx
+│   │   ├── sign-up/
+│   │   │   ├── page.tsx
+│   │   │   ├── email/page.tsx
+│   │   │   └── phone/page.tsx
+│   │   ├── verify-email/page.tsx
+│   │   ├── forgot-password/page.tsx
+│   │   ├── reset-password/page.tsx
+│   │   ├── magic-link/page.tsx
+│   │   └── onboarding/page.tsx
 │   ├── (app)/
 │   │   ├── layout.tsx
-│   │   ├── chat/
-│   │   │   ├── [roomId]/
-│   │   │   └── layout.tsx
-│   │   ├── lobby/
-│   │   ├── calls/
-│   │   ├── profile/
-│   │   ├── rooms/
-│   │   ├── shop/
-│   │   ├── settings/
-│   │   ├── admin/
-│   │   │   ├── moderation/
-│   │   │   ├── users/
-│   │   │   └── analytics/
-│   │   ├── gamification/
+│   │   ├── page.tsx                    → redirect to /lobby
+│   │   ├── lobby/page.tsx
+│   │   ├── room/
+│   │   │   └── [roomId]/
+│   │   │       ├── page.tsx
+│   │   │       ├── settings/page.tsx
+│   │   │       └── members/page.tsx
+│   │   ├── call/[callId]/page.tsx
+│   │   ├── messages/
+│   │   │   ├── page.tsx               → DM list
+│   │   │   └── [userId]/page.tsx      → DM conversation
+│   │   ├── profile/[userId]/page.tsx
+│   │   ├── leaderboard/page.tsx
+│   │   ├── shop/page.tsx
+│   │   ├── subscription/page.tsx
+│   │   ├── events/page.tsx
 │   │   ├── plugins/
-│   │   └── notifications/
-│   └── api/ (if Convex Actions needed)
+│   │   │   ├── marketplace/page.tsx
+│   │   │   └── my-plugins/page.tsx
+│   │   ├── notifications/page.tsx
+│   │   ├── settings/
+│   │   │   ├── profile/page.tsx
+│   │   │   ├── social/page.tsx
+│   │   │   ├── privacy/page.tsx
+│   │   │   ├── notifications/page.tsx
+│   │   │   ├── security/page.tsx
+│   │   │   ├── billing/page.tsx
+│   │   │   └── appearance/page.tsx
+│   │   └── admin/
+│   │       ├── dashboard/page.tsx
+│   │       ├── users/page.tsx
+│   │       ├── users/[userId]/page.tsx
+│   │       ├── rooms/page.tsx
+│   │       ├── moderation/page.tsx
+│   │       ├── analytics/page.tsx
+│   │       ├── billing/page.tsx
+│   │       ├── plugins/page.tsx
+│   │       ├── settings/page.tsx
+│   │       └── announcements/page.tsx
+│   └── api/
+│       └── webhooks/
+│           ├── stripe/route.ts
+│           └── livekit/route.ts
 ├── components/
 │   ├── layout/
+│   │   ├── AppSidebar.tsx
+│   │   ├── TopBar.tsx
+│   │   ├── CommandPalette.tsx
+│   │   ├── ThemeToggle.tsx
+│   │   ├── NotificationBell.tsx
+│   │   └── UserMenu.tsx
 │   ├── chat/
+│   │   ├── MessageBubble.tsx
+│   │   ├── MessageList.tsx
+│   │   ├── MessageInput.tsx
+│   │   ├── RichTextEditor.tsx
+│   │   ├── ReactionPicker.tsx
+│   │   ├── TypingIndicator.tsx
+│   │   ├── ReadReceipts.tsx
+│   │   ├── PinnedMessages.tsx
+│   │   ├── GiphyPicker.tsx
+│   │   └── MediaAttachment.tsx
 │   ├── calls/
+│   │   ├── IncomingCallDialog.tsx
+│   │   ├── LiveCallScreen.tsx
+│   │   ├── CallControls.tsx
+│   │   ├── ParticipantGrid.tsx
+│   │   └── CallQualityBadge.tsx
+│   ├── room/
+│   │   ├── RoomCard.tsx
+│   │   ├── RoomHeader.tsx
+│   │   ├── MemberPanel.tsx
+│   │   └── RoomSettingsForm.tsx
 │   ├── gamification/
+│   │   ├── XPProgressBar.tsx
+│   │   ├── LevelBadge.tsx
+│   │   ├── BadgeShowcase.tsx
+│   │   ├── StreakDisplay.tsx
+│   │   └── LeaderboardTable.tsx
 │   ├── notifications/
-│   └── ui/ (Shadcn components)
+│   │   ├── NotificationBell.tsx
+│   │   └── NotificationItem.tsx
+│   ├── profile/
+│   │   ├── ProfileHeader.tsx
+│   │   ├── ProfileStats.tsx
+│   │   └── SocialLinks.tsx
+│   └── ui/                             ← Shadcn components
 ├── convex/
+│   ├── _generated/                     ← auto-generated by Convex
 │   ├── schema.ts
 │   ├── auth.ts
+│   ├── http.ts
 │   ├── messages.ts
 │   ├── rooms.ts
 │   ├── users.ts
@@ -579,22 +732,36 @@ allochat/
 │   ├── moderation.ts
 │   ├── plugins.ts
 │   ├── notifications.ts
-│   └── _generated/ (auto-generated)
+│   └── events.ts
+├── hooks/
+│   ├── useCurrentUser.ts
+│   ├── usePresence.ts
+│   ├── useRoomMessages.ts
+│   ├── useCall.ts
+│   ├── useNotifications.ts
+│   └── useCommandPalette.ts
 ├── lib/
 │   ├── convex.ts
 │   ├── auth/
+│   │   ├── session.ts
+│   │   └── permissions.ts
 │   ├── i18n/
+│   │   ├── config.ts
+│   │   └── en.ts
 │   ├── data/
-│   ├── utils.ts
-│   └── hooks/
-├── hooks/
-│   ├── useRoomMessages.ts
-│   ├── usePresence.ts
-│   ├── useCall.ts
-│   └── ...
+│   │   ├── room-categories.ts
+│   │   ├── subscription-plans.ts
+│   │   ├── permissions.ts
+│   │   ├── roles.ts
+│   │   ├── badge-definitions.ts
+│   │   ├── xp-actions.ts
+│   │   └── nav-items.ts
+│   ├── livekit.ts
+│   ├── cloudinary.ts
+│   ├── stripe.ts
+│   └── utils.ts
 ├── middleware.ts
-├── .env.local (not committed)
-├── convex.json (deployment config)
+├── .env.local
 └── package.json
 ```
 
@@ -603,119 +770,90 @@ allochat/
 ## Verification Plan
 
 ### Automated Tests
-Run with `npm run test` after setup.
+```bash
+npm run test           # Unit tests
+npm run test:e2e       # Playwright end-to-end
+npx convex dev         # Convex type checking
+```
 
-**Auth smoke tests**:
-- `tests/auth/signup-email.test.ts` — POST signup, expect session
-- `tests/auth/login-otp.test.ts` — OTP flow end-to-end
-- `tests/auth/oauth.test.ts` — Google OAuth callback
+**Test coverage**:
+- Auth signup/login/reset flows
+- Message send/edit/delete/react
+- Room create/join/leave
+- Call initiate/accept/end
+- XP + badge unlock logic
+- Stripe webhook handling
+- Permission checks for all roles
 
-**Real-time tests**:
-- `tests/realtime/messaging.test.ts` — Send message, verify real-time sync
-- `tests/realtime/presence.test.ts` — User online status updates
-
-**RBAC tests**:
-- `tests/rbac/permissions.test.ts` — Permission check functions
-
-### Manual Verification (Browser)
+### Manual Browser Verification
 
 After `npm run dev` at each phase:
 
-1. **Auth flows** — visit `http://localhost:3000/auth/sign-up`, complete email signup, verify email, check onboarding redirect.
-
-2. **Chat** — Create room, send message, verify real-time delivery (open two browsers), check message reactions.
-
-3. **Calling** — Start 1-on-1 call, verify video/audio streams, check call recording button.
-
-4. **Gamification** — Earn XP, check level up notification, view leaderboard.
-
-5. **Shop** — Purchase gift, verify currency deduct, send gift to user.
-
-6. **Admin** — Submit report, check moderation queue, take action (ban/warn).
-
-7. **Dark/Light theme** — Toggle theme, verify all pages switch.
+1. **Auth** — Sign up with email, verify OTP, complete onboarding
+2. **Messaging** — Open 2 browsers, send message, verify <100ms sync
+3. **DMs** — Send DM, check conversation list updates
+4. **Rooms** — Create room, join from second browser, see presence
+5. **Calls** — Start 1:1 call, verify video stream, check end call
+6. **Reactions** — Add emoji reaction, verify real-time update in both browsers
+7. **Gamification** — Check XP earned, trigger badge unlock toast
+8. **Shop** — Purchase gift, send to user, verify deduction
+9. **Admin** — Submit report, check moderation queue, take action
+10. **Dark mode** — Toggle theme, verify all pages switch smoothly
 
 ---
 
-## Quality Standards
+## Performance Targets
 
-### Performance Targets
-- **Time to Interactive**: <2s (mobile), <1s (desktop)
-- **Message Latency**: <100ms (P99)
-- **Call Setup**: <3s
-- **API Response**: <50ms (P95)
-- **Uptime**: 99.99% SLA
-
-### Code Quality
-- TypeScript strict mode (no `any`)
-- Zod validation on all API inputs
-- Shadcn accessible components (WCAG 2.1 AA)
-- Unit tests for critical business logic
-- Integration tests for user flows
-
-### Security Checklist
-- ✅ No hardcoded secrets
-- ✅ All inputs validated (Zod)
-- ✅ XSS, CSRF, SQL injection prevention
-- ✅ Rate limiting on auth endpoints
-- ✅ Encrypted sensitive data in DB
-- ✅ Audit logs for admin actions
-- ✅ HTTPS everywhere (enforced by framework)
-
----
-
-## Deployment Pipeline
-
-### Staging (Optional)
-1. Create `staging` branch
-2. Deploy to staging URL (Vercel preview)
-3. QA testing
-4. Merge to `main`
-
-### Production
-1. Merge to `main`
-2. GitHub Actions trigger deployment
-3. Convex schema deployed automatically
-4. Vercel deploys frontend
-5. Smoke tests run
-6. Alert on-call if deployment fails
+| Metric | Target |
+|--------|--------|
+| Time to Interactive (desktop) | <1s |
+| Time to Interactive (mobile) | <2s |
+| Message delivery (P99) | <100ms |
+| Call setup | <3s |
+| Convex query (P95) | <50ms |
+| Lighthouse score | >90 |
+| Uptime SLA | 99.99% |
 
 ---
 
 ## Timeline Estimate
 
-| Phase | Feature | Complexity | Time |
-|-------|---------|-----------|------|
-| 1 | Foundation | High | 1 week |
-| 2 | Auth | Medium | 1 week |
-| 3 | Layout | Low | 3 days |
-| 4 | Messaging | High | 1.5 weeks |
-| 5 | Rooms | Medium | 1 week |
-| 6 | Profiles | Low | 3 days |
-| 7 | Calling | High | 1.5 weeks |
+| Phase | Feature | Complexity | Est. Time |
+|-------|---------|-----------|-----------|
+| 1 | Foundation + Schema | High | 1 week |
+| 2 | Auth System | Medium | 1 week |
+| 3 | Layout + Navigation | Low | 3 days |
+| 4 | Real-Time Messaging | High | 1.5 weeks |
+| 5 | Rooms + Lobby | Medium | 1 week |
+| 6 | User Profiles + Social | Medium | 1 week |
+| 7 | Video + Audio Calling | High | 1.5 weeks |
 | 8 | Gamification | Medium | 1 week |
-| 9 | Monetization | Medium | 1.5 weeks |
-| 10 | Moderation | Medium | 1 week |
-| 11 | Plugins | High | 1.5 weeks |
+| 9 | Payments + Shop | Medium | 1.5 weeks |
+| 10 | Plugin System | High | 1.5 weeks |
+| 11 | Moderation + Admin | Medium | 1 week |
 | 12 | Notifications | Low | 3 days |
-| 13 | Deployment | Medium | 1 week |
+| 13 | Events System | Medium | 1 week |
+| 14 | Security + Polish | Medium | 1 week |
 
-**Total**: ~16 weeks (4 months) for full production-ready platform.
+**Total**: ~17–18 weeks (~4.5 months) for full production-ready platform.
 
 ---
 
-## Key Success Metrics
+## Key Success Metrics (KPIs)
 
-1. **User Acquisition**: 100K users in first 3 months post-launch
-2. **Engagement**: 40% DAU/MAU ratio (healthy for social platform)
-3. **Retention**: 30-day retention >50%
-4. **Conversion**: 5% free → paid conversion (PRO/enterprise)
-5. **Performance**: <100ms message latency (P99)
-6. **Reliability**: 99.99% uptime SLA
-7. **Support**: <2hr response time for critical issues
+| Metric | Target (3 months post-launch) |
+|--------|-------------------------------|
+| Registered users | 100,000+ |
+| DAU/MAU ratio | 40%+ |
+| 30-day retention | >50% |
+| Free → paid conversion | 5%+ |
+| Average session length | >20 min |
+| Message latency (P99) | <100ms |
+| Uptime | 99.99% |
+| NPS score | >50 |
 
 ---
 
 **Last Updated**: March 19, 2026
-**Version**: 1.0-draft
-**Status**: Pending User Review ⏳
+**Version**: 2.0-plan
+**Status**: Ready for Development 🚀
