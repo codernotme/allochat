@@ -1,0 +1,31 @@
+#############################
+Addons installation guide
+#############################
+
+
+step 1- upload the folder located inside the " for codychat " 
+		that match your codychat version to the addons folder of
+		your chat.
+		
+step 2- Go to your chat admin panel in manage addons section
+step 3- install addons
+step 4- installation complete
+step 5- to run quizbot you need to run a cron job command on your host panel
+		here is an example of the command for the quiz. This command may be different
+		according to your type of panel.
+		
+example command cron:
+
+* * * * * php -q /home/user_here/public_html/addons/quizbot/system/cron/quizbot.php
+
+if you have any problem related to this addons installation please
+do not hesitate to contact us via the store support.
+
+Enjoy.
+
+Author: BoomCoding
+Email: boomcoding@hotmail.com
+Url: http://www.boomcoding.com
+help: http://boomcoding.com/sotre/
+
+Copyright © 2019 Codychat.

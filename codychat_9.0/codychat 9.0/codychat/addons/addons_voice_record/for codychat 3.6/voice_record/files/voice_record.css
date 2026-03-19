@@ -1,0 +1,15 @@
+.record-circle {
+    color:#ff0000!important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.counter_text {
+/*    left: 14px;
+    top: 6px;*/
+    font-size:10px;
+    font-weight: bold;
+    color: #ffffff;
+    position: absolute;
+}
