@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from '@/lib/data/nav-items';
 import { Button } from '@/components/ui/button';
+import { Icon } from '@iconify/react';
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -34,7 +35,7 @@ export function AppSidebar() {
       {/* Logo */}
       <div className={cn('flex items-center gap-3 border-b p-4', collapsed && 'justify-center')}>
         <div className="bg-primary flex size-8 shrink-0 items-center justify-center rounded-lg text-lg">
-          💬
+          <Icon icon="solar:chat-round-dots-bold" className="size-5 text-primary-foreground" />
         </div>
         {!collapsed && (
           <span className="text-foreground text-lg font-bold tracking-tight">AlloChat</span>
@@ -72,7 +73,10 @@ export function AppSidebar() {
           )}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <span>{collapsed ? '→' : '←'}</span>
+          <Icon
+            icon={collapsed ? 'solar:alt-arrow-right-linear' : 'solar:alt-arrow-left-linear'}
+            className="size-4"
+          />
           {!collapsed && <span>Collapse</span>}
         </button>
         <button
@@ -83,7 +87,7 @@ export function AppSidebar() {
           )}
           aria-label="Sign out"
         >
-          <span>🚪</span>
+          <Icon icon="solar:logout-2-linear" className="size-4" />
           {!collapsed && <span>Sign Out</span>}
         </button>
       </div>
@@ -125,7 +129,7 @@ function NavSection({
             )}
             title={collapsed ? item.label : undefined}
           >
-            <span className="text-base">{item.emoji}</span>
+            <Icon icon={item.icon} className="size-4" />
             {!collapsed && <span>{item.label}</span>}
           </Link>
         );

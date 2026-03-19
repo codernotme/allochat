@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query, internalMutation } from './_generated/server';
 import { api } from './_generated/api';
-import { XP_ACTIONS, getLevelFromXP, getXPForLevel } from '../lib/data/xp-actions';
+import { XP_ACTIONS, getLevelFromXP } from '../lib/data/xp-actions';
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
@@ -11,12 +11,21 @@ export const addXP = internalMutation({
     actionSlug: v.string(),
     metadata: v.optional(v.any())
   },
+  returns: v.object({
+    xpGained: v.number(),
+    leveledUp: v.boolean(),
+    newLevel: v.number(),
+  }),
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
-    if (!user) return;
+    if (!user) {
+      return { xpGained: 0, leveledUp: false, newLevel: 1 };
+    }
 
-    const action = XP_ACTIONS.find(a => a.slug === args.actionSlug);
-    if (!action) return;
+    const action = XP_ACTIONS.find((a) => a.key === args.actionSlug);
+    if (!action) {
+      return { xpGained: 0, leveledUp: false, newLevel: user.level || 1 };
+    }
 
     // Check caps (simplified for now)
     // In a real app, we'd check against a 'dailyXPTasks' table
@@ -51,6 +60,7 @@ export const addXP = internalMutation({
 
 export const awardBadge = internalMutation({
   args: { userId: v.id('users'), badgeSlug: v.string() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const badge = await ctx.db
       .query('badges')
@@ -58,13 +68,13 @@ export const awardBadge = internalMutation({
       .unique();
     if (!badge) return;
 
-    const existing = await ctx.db
+    const existingCandidates = await ctx.db
       .query('userBadges')
       .withIndex('byUser', (q) => q.eq('userId', args.userId).eq('isUnlocked', true))
-      .filter((q) => q.eq(q.field('badgeId'), badge._id))
-      .unique();
+      .collect();
+    const existing = existingCandidates.find((ub) => ub.badgeId === badge._id);
       
-    if (existing) return;
+    if (existing) return null;
 
     await ctx.db.insert('userBadges', {
       userId: args.userId,
@@ -82,6 +92,8 @@ export const awardBadge = internalMutation({
       isRead: false,
       createdAt: Date.now(),
     });
+
+    return null;
   },
 });
 
@@ -89,6 +101,7 @@ export const awardBadge = internalMutation({
 
 export const getLeaderboard = query({
   args: { limit: v.optional(v.number()) },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     return await ctx.db
       .query('users')

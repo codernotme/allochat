@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { Icon } from '@iconify/react';
 
 export function NotificationBell() {
   const notifications = useQuery(api.notifications.getUnread);
@@ -19,15 +20,13 @@ export function NotificationBell() {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full hover:bg-muted" aria-label={`Notifications, ${unreadCount} unread`}>
-          <span className="text-xl">🔔</span>
-          {unreadCount > 0 && (
-            <span className="bg-destructive absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ring-2 ring-background ring-offset-0">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </Button>
+      <PopoverTrigger className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors" aria-label={`Notifications, ${unreadCount} unread`}>
+        <Icon icon="solar:bell-linear" className="size-5" />
+        {unreadCount > 0 && (
+          <span className="bg-destructive absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ring-2 ring-background ring-offset-0">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-80 border-border/50 p-0 shadow-2xl backdrop-blur-xl" align="end" sideOffset={8}>
         <div className="bg-card/50 flex items-center justify-between p-4 pb-2">

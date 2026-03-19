@@ -58,12 +58,12 @@ export const getRoomMembers = query({
         return {
           ...m,
           user: user ? {
-            name: user.name,
+            name: user.displayName || user.username,
             username: user.username,
-            image: user.image,
+            image: user.avatar,
             level: user.level || 1,
             xp: user.xp || 0,
-            isOnline: true, // Placeholder for real presence
+            isOnline: user.presenceStatus === 'online',
           } : null,
         };
       })

@@ -6,6 +6,8 @@ import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Icon } from '@iconify/react';
+import { EmoticonPicker } from './EmoticonPicker';
 
 type Props = { roomId: Id<'rooms'> };
 
@@ -51,6 +53,11 @@ export function MessageInput({ roomId }: Props) {
     e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
   }
 
+  function insertToken(token: string) {
+    setContent((prev) => `${prev}${prev.endsWith(' ') || prev.length === 0 ? '' : ' '}${token} `);
+    textareaRef.current?.focus();
+  }
+
   return (
     <div className="border-border bg-background border-t p-3">
       <div className="border-border focus-within:border-primary focus-within:ring-primary/20 flex items-end gap-2 rounded-xl border px-3 py-2 transition-all focus-within:ring-2">
@@ -60,7 +67,7 @@ export function MessageInput({ roomId }: Props) {
           aria-label="Attach file"
           title="Attach file (coming soon)"
         >
-          📎
+          <Icon icon="solar:paperclip-linear" className="size-4" />
         </button>
 
         {/* Textarea */}
@@ -76,13 +83,9 @@ export function MessageInput({ roomId }: Props) {
         />
 
         {/* Emoji */}
-        <button
-          className="text-muted-foreground hover:text-foreground mb-1 transition-colors"
-          aria-label="Emoji picker"
-          title="Emoji (coming soon)"
-        >
-          😊
-        </button>
+        <div className="mb-0.5">
+          <EmoticonPicker onPick={insertToken} />
+        </div>
 
         {/* Send button */}
         <Button
@@ -92,7 +95,7 @@ export function MessageInput({ roomId }: Props) {
           disabled={!content.trim() || sending}
           aria-label="Send message"
         >
-          {sending ? '…' : '↑'}
+          {sending ? '…' : <Icon icon="solar:arrow-up-linear" className="size-4" />}
         </Button>
       </div>
       <p className="text-muted-foreground mt-1 text-center text-xs">

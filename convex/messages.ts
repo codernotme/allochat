@@ -26,8 +26,8 @@ export const listMessages = query({
         return {
           ...msg,
           sender: user ? {
-            name: user.name,
-            image: user.image,
+            name: user.displayName || user.username,
+            image: user.avatar,
             level: user.level || 1,
           } : null,
         };
@@ -152,6 +152,9 @@ export const sendMessage = mutation({
 
     // Increment room message count
     const room = await ctx.db.get(args.roomId);
+    if (!room) {
+      throw new Error('Room not found');
+    }
     // 4. Update room stats
     await ctx.db.patch(args.roomId, {
       totalMessages: (room.totalMessages || 0) + 1,

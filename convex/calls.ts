@@ -1,6 +1,5 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
-import { api } from './_generated/api';
 import { getAuthUserId } from '@convex-dev/auth/server';
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -39,11 +38,9 @@ export const startCall = mutation({
     const now = Date.now();
     const callId = await ctx.db.insert('calls', {
       roomId: args.roomId,
-      hostId: userId,
       type: args.type,
       status: 'active',
       startedAt: now,
-      participantCount: 1,
       isGroup: true,
       initiatorId: userId,
       participantIds: [userId],
@@ -89,9 +86,8 @@ export const endCall = mutation({
     const call = await ctx.db.get(args.callId);
     if (!call) throw new Error('Call not found');
 
-    // Only host or room owner can end
-    const room = await ctx.db.get(call.roomId);
-    if (call.hostId !== userId && room?.ownerId !== userId) {
+    // Only the initiator can end the call for now.
+    if (call.initiatorId !== userId) {
       throw new Error('Not authorized');
     }
 

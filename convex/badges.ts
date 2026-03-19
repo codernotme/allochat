@@ -1,12 +1,13 @@
 import { v } from 'convex/values';
 import { mutation, query, internalMutation, internalAction } from './_generated/server';
-import { api } from './_generated/api';
+import { internal } from './_generated/api';
 import { BADGE_DEFINITIONS } from '../lib/data/badge-definitions';
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 export const seedBadges = internalMutation({
   args: {},
+  returns: v.null(),
   handler: async (ctx) => {
     for (const badge of BADGE_DEFINITIONS) {
       const existing = await ctx.db
@@ -28,28 +29,32 @@ export const seedBadges = internalMutation({
         });
       }
     }
+    return null;
   },
 });
 
 export const checkAndAwardBadges = internalMutation({
   args: { userId: v.id('users'), type: v.string(), value: v.optional(v.number()) },
+  returns: v.null(),
   handler: async (ctx, args) => {
     // Basic logic for awarding badges based on certain triggers
     // This would be expanded as more complex conditions are added
     
     if (args.type === 'first_message') {
-      await ctx.runMutation(api.gamification.awardBadge, {
+      await ctx.runMutation(internal.gamification.awardBadge, {
         userId: args.userId,
         badgeSlug: 'first_steps',
       });
     }
 
     if (args.type === 'room_creator') {
-      await ctx.runMutation(api.gamification.awardBadge, {
+      await ctx.runMutation(internal.gamification.awardBadge, {
         userId: args.userId,
         badgeSlug: 'architect',
       });
     }
+
+    return null;
   },
 });
 
@@ -57,6 +62,7 @@ export const checkAndAwardBadges = internalMutation({
 
 export const getBadgeDefinitions = query({
   args: {},
+  returns: v.array(v.any()),
   handler: async (ctx) => {
     return await ctx.db.query('badges').collect();
   },
@@ -64,6 +70,7 @@ export const getBadgeDefinitions = query({
 
 export const getUserBadges = query({
   args: { userId: v.id('users') },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     const userBadges = await ctx.db
       .query('userBadges')

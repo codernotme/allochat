@@ -1,12 +1,15 @@
+import { v } from 'convex/values';
 import { internalAction } from './_generated/server';
-import { api } from './_generated/api';
+import { internal } from './_generated/api';
 
 export const seedAll = internalAction({
   args: {},
+  returns: v.null(),
   handler: async (ctx) => {
     // Seed badges
-    await ctx.runMutation(api.badges.seedBadges, {});
+    await ctx.runMutation(internal.badges.seedBadges, {});
     
     // Potential other seeds (rooms, etc.)
+    return null;
   },
 });

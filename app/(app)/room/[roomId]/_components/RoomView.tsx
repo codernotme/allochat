@@ -14,6 +14,7 @@ import { useMutation } from 'convex/react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { Icon } from '@iconify/react';
 
 type Props = { roomId: Id<'rooms'> };
 
@@ -62,7 +63,7 @@ export function RoomView({ roomId }: Props) {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <span className="text-blue-500">✨</span>
+                      <Icon icon="solar:verified-check-linear" className="size-4 text-blue-500" />
                     </TooltipTrigger>
                     <TooltipContent>Verified Room</TooltipContent>
                   </Tooltip>
@@ -87,7 +88,8 @@ export function RoomView({ roomId }: Props) {
                   setInCall(true);
                 }}
               >
-                {activeCall ? '📞 Join Call' : '📞 Start Call'}
+                <Icon icon="solar:phone-calling-rounded-linear" className="size-4" />
+                {activeCall ? 'Join Call' : 'Start Call'}
               </Button>
             )}
             <div className="bg-accent/50 hidden items-center gap-2 rounded-full px-3 py-1.5 md:flex">
@@ -106,7 +108,7 @@ export function RoomView({ roomId }: Props) {
               onClick={() => setShowMembers(!showMembers)}
               aria-label="Toggle member panel"
             >
-              <span className="text-lg">👥</span>
+              <Icon icon="solar:users-group-rounded-linear" className="size-4" />
             </Button>
           </div>
         </div>

@@ -72,7 +72,7 @@ export function LobbyView() {
         <div className="flex flex-col gap-3">
           <h2 className="font-semibold">⭐ Featured</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((room) => (
+            {featured.map((room: any) => (
               <RoomCard key={room._id} room={room} featured />
             ))}
           </div>
@@ -106,8 +106,8 @@ export function LobbyView() {
         {rooms && rooms.length > 0 && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {rooms
-              .filter(r => !searchQuery || r.name.toLowerCase().includes(searchQuery.toLowerCase()))
-              .map((room) => (
+              .filter((r: any) => !searchQuery || r.name.toLowerCase().includes(searchQuery.toLowerCase()))
+              .map((room: any) => (
                 <RoomCard key={room._id} room={room} />
               ))}
           </div>

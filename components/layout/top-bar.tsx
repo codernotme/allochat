@@ -3,7 +3,10 @@
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { NotificationBell } from './notification-bell';
+import { cn } from '@/lib/utils';
+import { Icon } from '@iconify/react';
 
 export function TopBar() {
   const { theme, setTheme } = useTheme();
@@ -32,7 +35,10 @@ export function TopBar() {
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           aria-label="Toggle theme"
         >
-          <span className="text-base">{theme === 'dark' ? '☀️' : '🌙'}</span>
+          <Icon
+            icon={theme === 'dark' ? 'solar:sun-2-linear' : 'solar:moon-stars-linear'}
+            className="size-5"
+          />
         </Button>
 
         {/* User avatar shortcut */}
@@ -42,7 +48,7 @@ export function TopBar() {
           aria-label="Profile"
         >
           <div className="bg-primary/20 flex size-7 items-center justify-center rounded-full text-sm">
-            😊
+            <Icon icon="solar:user-circle-linear" className="size-4" />
           </div>
         </Link>
       </div>

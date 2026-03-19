@@ -6,10 +6,11 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { useParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -38,9 +39,9 @@ export default function UserProfilePage() {
         </div>
         <div className="absolute -bottom-14 right-8 flex gap-2">
           {isOwnProfile ? (
-            <Button asChild>
-              <Link href="/settings/profile">Edit Profile</Link>
-            </Button>
+            <Link href="/settings/profile" className={cn(buttonVariants({ variant: 'default' }))}>
+              Edit Profile
+            </Link>
           ) : (
             <>
               <Button>Add Friend</Button>

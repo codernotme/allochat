@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { Figtree, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
-import { ConvexClientProvider } from '@/lib/convex';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ConvexClientProvider } from '@/lib/convex';
 
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 

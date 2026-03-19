@@ -43,6 +43,7 @@ export default function ProfileSettingsPage() {
   }
 
   if (user === undefined) return <div className="p-8 text-center">Loading settings…</div>;
+  if (user === null) return <div className="p-8 text-center">Please sign in to manage settings.</div>;
 
   return (
     <div className="mx-auto max-w-4xl p-6">

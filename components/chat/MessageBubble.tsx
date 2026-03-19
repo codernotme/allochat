@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { LevelBadge } from '@/components/gamification/LevelBadge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { EmoticonText } from './EmoticonText';
 
 type Props = { message: any; grouped?: boolean };
 
@@ -95,7 +96,7 @@ export function MessageBubble({ message, grouped }: Props) {
 
         {/* Content */}
         <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-          {message.content}
+          <EmoticonText content={message.content} />
         </p>
 
         {/* System message */}

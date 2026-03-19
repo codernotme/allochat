@@ -4,6 +4,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { LevelBadge } from '@/components/gamification/LevelBadge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { Icon } from '@iconify/react';
 
 type Props = { roomId: Id<'rooms'> };
 
@@ -50,7 +51,19 @@ export function MemberPanel({ roomId }: Props) {
                 <LevelBadge level={member.user?.level || 1} />
               </div>
               <p className="text-muted-foreground mt-1 text-[10px] font-medium capitalize flex items-center gap-1">
-                {member.role === 'owner' ? '👑 Owner' : member.role === 'admin' ? '🛡️ Admin' : '👤 Member'}
+                {member.role === 'owner' ? (
+                  <>
+                    <Icon icon="solar:crown-linear" className="size-3" /> Owner
+                  </>
+                ) : member.role === 'admin' ? (
+                  <>
+                    <Icon icon="solar:shield-check-linear" className="size-3" /> Admin
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="solar:user-linear" className="size-3" /> Member
+                  </>
+                )}
               </p>
             </div>
           </div>
