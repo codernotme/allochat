@@ -3,14 +3,30 @@ import { Password } from '@convex-dev/auth/providers/Password';
 import Google from '@auth/core/providers/google';
 import { Email } from '@convex-dev/auth/providers/Email';
 
+const normalizeUsername = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const buildBaseUsername = (email?: string, name?: string, username?: string) => {
+  const seed = username || (email ? email.split('@')[0] : name || 'user');
+  const normalized = normalizeUsername(seed);
+  if (normalized.length >= 3) return normalized;
+  return `user${normalized}`;
+};
+
+const buildDisplayName = (email?: string, name?: string, username?: string) => {
+  if (name && name.trim().length > 0) return name;
+  if (username && username.trim().length > 0) return username;
+  if (email && email.includes('@')) return email.split('@')[0];
+  return 'User';
+};
+
 const getDefaultUserData = (email?: string, name?: string, username?: string) => {
-  const baseUsername = username || (email ? email.split('@')[0] : (name ? name.toLowerCase().replace(/\s+/g, '_') : 'user_' + Math.floor(Math.random() * 10000)));
+  const baseUsername = buildBaseUsername(email, name, username);
   const now = Date.now();
   
   return {
     email: email as string,
-    username: baseUsername.toLowerCase().replace(/[^a-z0-9]/g, ''),
-    displayName: name || baseUsername,
+    username: baseUsername,
+    displayName: buildDisplayName(email, name, baseUsername),
     presenceStatus: 'online' as const,
     lastSeenAt: now,
     theme: 'dark' as const,
@@ -38,6 +54,15 @@ const getDefaultUserData = (email?: string, name?: string, username?: string) =>
     updatedAt: now,
   };
 };
+
+const getProfileStrings = (profile: Record<string, unknown>) => {
+  const email = typeof profile.email === 'string' ? profile.email : undefined;
+  const name = typeof profile.name === 'string' ? profile.name : undefined;
+  const username = typeof profile.username === 'string' ? profile.username : undefined;
+  return { email, name, username };
+};
+
+const withEntropy = (value: string) => `${value}${Math.floor(Math.random() * 1000000)}`;
 
 const providers = [
   Password({
@@ -107,4 +132,37 @@ const providers = [
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers,
+  callbacks: {
+    async createOrUpdateUser(ctx, args) {
+      const { email, name, username } = getProfileStrings(args.profile);
+      const defaults = getDefaultUserData(email, name, username);
+
+      if (args.existingUserId) {
+        const current = await ctx.db.get(args.existingUserId);
+        if (!current) {
+          throw new Error('User not found during auth update');
+        }
+
+        const patch: Record<string, unknown> = {
+          updatedAt: Date.now(),
+        };
+
+        if (!current.email && defaults.email) patch.email = defaults.email;
+        if (!current.displayName) patch.displayName = defaults.displayName;
+
+        if (!current.username || current.username.length === 0) {
+          patch.username = withEntropy(defaults.username);
+        }
+
+        await ctx.db.patch(args.existingUserId, patch);
+        return args.existingUserId;
+      }
+
+      const userId = await ctx.db.insert('users', {
+        ...defaults,
+        username: withEntropy(defaults.username),
+      });
+      return userId;
+    },
+  },
 });
