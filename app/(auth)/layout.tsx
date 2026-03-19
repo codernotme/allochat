@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* AlloChat branding */}
       <div className="relative z-10 mb-8 flex flex-col items-center gap-2">
         <div className="bg-primary flex size-14 items-center justify-center rounded-2xl text-3xl shadow-lg">
-          <Icon icon="solar:chat-round-line-linear" className="size-8 text-primary-foreground" />
+          <Icon icon="solar:chat-round-bold-duotone" className="size-8 text-primary-foreground" />
         </div>
         <h1 className="text-foreground text-2xl font-bold tracking-tight">AlloChat</h1>
         <p className="text-muted-foreground text-sm">Connect. Chat. Call.</p>
