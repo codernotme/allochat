@@ -16,7 +16,6 @@ const isAuthPage = createRouteMatcher([
   '/onboarding(.*)',
 ]);
 
-const isAdminPage = createRouteMatcher(['/admin(.*)']);
 const isPublicPage = createRouteMatcher([
   '/',
   '/api/auth(.*)',
@@ -77,7 +76,7 @@ function setAnalyticsCookies(request: Request, response: NextResponse) {
   });
 }
 
-export default convexAuthNextjsMiddleware(async (request, ctx) => {
+export default convexAuthNextjsMiddleware(async (request) => {
   const authenticated = await isAuthenticatedNextjs();
 
   // Redirect unauthenticated users away from protected pages
