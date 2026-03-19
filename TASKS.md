@@ -23,18 +23,18 @@
 - [ ] Configure SendGrid for email
 
 ### Database Schema
-- [ ] Create `convex/schema.ts` with all tables
-- [ ] Define `users` table (auth fields + profile)
-- [ ] Define `messages` table (with reactions, threads)
-- [ ] Define `rooms` table (with settings, members)
-- [ ] Define `calls` table (with LiveKit integration)
-- [ ] Define `gamification` tables (XP, badges, leaderboards)
-- [ ] Define `payments` tables (wallets, subscriptions)
-- [ ] Define `moderation` tables (actions, reports, appeals)
-- [ ] Define `notifications` table (event log)
-- [ ] Define `audit_logs` table (admin tracking)
-- [ ] Create appropriate indexes for performance
-- [ ] Test schema deployment to Convex
+- [x] Create `convex/schema.ts` with all tables
+- [x] Define `users` table (auth fields + profile)
+- [x] Define `messages` table (with reactions, threads)
+- [x] Define `rooms` table (with settings, members)
+- [x] Define `calls` table (with LiveKit integration)
+- [x] Define `gamification` tables (XP, badges, leaderboards)
+- [x] Define `payments` tables (wallets, subscriptions)
+- [x] Define `moderation` tables (actions, reports, appeals)
+- [x] Define `notifications` table (event log)
+- [x] Define `audit_logs` table (admin tracking)
+- [x] Create appropriate indexes for performance
+- [x] Test schema deployment to Convex
 
 ### Configuration Files
 - [x] Create `lib/data/room-categories.ts`
@@ -43,13 +43,13 @@
 - [x] Create `lib/data/roles.ts`
 - [x] Create `lib/data/badge-definitions.ts`
 - [x] Create `lib/data/nav-items.ts`
-- [ ] Create `lib/i18n/config.ts` + language files
+- [x] Create `lib/i18n/config.ts` + language files
 - [x] Create `convex.json`
 - [x] Create `.gitignore` (exclude `.env.local`, etc.)
 
 ### Infrastructure Helpers
 - [x] Create `lib/convex.ts` (client + hooks)
-- [ ] Create `lib/auth/` folder with helpers
+- [x] Create `lib/auth/` folder with helpers
 - [x] Create `middleware.ts` (session validation, RBAC)
 - [x] Set up TypeScript strict mode
 - [x] Configure ESLint + Prettier
@@ -72,31 +72,31 @@
 - [x] Create `app/(auth)/sign-in/email/page.tsx` (form)
 - [x] Create `app/(auth)/verify-email/page.tsx` (OTP input)
 - [x] Create `app/(auth)/forgot-password/page.tsx`
-- [ ] Create `app/(auth)/reset-password/page.tsx`
-- [ ] Create `app/(auth)/magic-link/page.tsx`
+- [x] Create `app/(auth)/reset-password/page.tsx`
+- [x] Create `app/(auth)/magic-link/page.tsx`
 - [x] Create `app/(auth)/onboarding/page.tsx` (multi-step)
 
 ### Auth Mutations & Queries
 - [x] Create `convex/auth.ts` with all mutation handlers
-- [ ] Implement `signUpEmail()` mutation
-- [ ] Implement `signInEmail()` mutation
-- [ ] Implement `signInMagicLink()` mutation
-- [ ] Implement `signInOAuth()` mutation
-- [ ] Implement `requestPasswordReset()` mutation
-- [ ] Implement `resetPassword()` mutation
-- [ ] Implement `getCurrentUser()` query
+- [x] Implement `signUpEmail()` mutation (via Convex Auth)
+- [x] Implement `signInEmail()` mutation (via Convex Auth)
+- [x] Implement `signInMagicLink()` mutation (via Convex Auth)
+- [x] Implement `signInOAuth()` mutation (via Convex Auth)
+- [x] Implement `requestPasswordReset()` mutation
+- [x] Implement `resetPassword()` mutation
+- [x] Implement `getCurrentUser()` query
 - [ ] Implement `setupTwoFactor()` mutation
 - [ ] Implement `verifyTwoFactor()` mutation
 - [ ] Implement `setupBackupCodes()` mutation
 - [ ] Implement `verifyBackupCode()` mutation
 
 ### Auth Components
-- [ ] Create `components/auth/AuthForm.tsx` (base form)
-- [ ] Create `components/auth/EmailInput.tsx`
-- [ ] Create `components/auth/PasswordInput.tsx` (with strength meter)
-- [ ] Create `components/auth/OTPInput.tsx`
-- [ ] Create `components/auth/OAuthButtons.tsx`
-- [ ] Create `components/auth/TermsCheckbox.tsx`
+- [x] Create `components/auth/AuthForm.tsx` (implemented inline)
+- [x] Create `components/auth/EmailInput.tsx` (implemented inline)
+- [x] Create `components/auth/PasswordInput.tsx` (implemented inline)
+- [x] Create `components/auth/OTPInput.tsx` (implemented via Shadcn InputOTP inline)
+- [x] Create `components/auth/OAuthButtons.tsx` (implemented inline)
+- [x] Create `components/auth/TermsCheckbox.tsx` (implemented inline)
 
 ### Session Management
 - [ ] Implement session cookie storage
