@@ -85,6 +85,11 @@ const providers = [
   Email({
     id: 'resend',
     maxAge: 10 * 60,
+    generateVerificationToken: async () => {
+      const array = new Uint8Array(4);
+      crypto.getRandomValues(array);
+      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+    },
     async sendVerificationRequest({ identifier: email, url, token }) {
       const resendApi = process.env.RESEND_API_KEY || process.env.RESEND_API;
       const fromEmail = process.env.AUTH_EMAIL_FROM || 'noreply@codernotme.studio';
