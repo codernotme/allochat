@@ -15,6 +15,7 @@ const isAuthPage = createRouteMatcher([
 const isPublicPage = createRouteMatcher([
   '/',
   '/api/auth(.*)',
+  '/api/storage(.*)',
   '/about',
   '/privacy',
   '/terms',
@@ -22,6 +23,19 @@ const isPublicPage = createRouteMatcher([
   '/refund',
   '/community-rules',
   '/contact',
+]);
+
+const isProtectedPage = createRouteMatcher([
+  '/lobby(.*)',
+  '/room(.*)',
+  '/rooms(.*)',
+  '/messages(.*)',
+  '/friends(.*)',
+  '/notifications(.*)',
+  '/profile(.*)',
+  '/settings(.*)',
+  '/admin(.*)',
+  '/onboarding(.*)',
 ]);
 
 const ANALYTICS_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -73,9 +87,28 @@ function setAnalyticsCookies(request: Request, response: NextResponse) {
 }
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
-  void convexAuth;
-  void isAuthPage;
-  void isPublicPage;
+  const isAuthenticated = await convexAuth.isAuthenticated();
+  const { pathname, search } = new URL(request.url);
+
+  if (!isAuthenticated && isProtectedPage(request)) {
+    const redirectUrl = new URL('/sign-in', request.url);
+    redirectUrl.searchParams.set('redirect', `${pathname}${search}`);
+    const response = NextResponse.redirect(redirectUrl);
+    setAnalyticsCookies(request, response);
+    return response;
+  }
+
+  if (isAuthenticated && isAuthPage(request)) {
+    const response = NextResponse.redirect(new URL('/lobby', request.url));
+    setAnalyticsCookies(request, response);
+    return response;
+  }
+
+  if (!isAuthenticated && !isPublicPage(request) && !isProtectedPage(request)) {
+    const response = NextResponse.redirect(new URL('/sign-in', request.url));
+    setAnalyticsCookies(request, response);
+    return response;
+  }
 
   const response = NextResponse.next();
   setAnalyticsCookies(request, response);

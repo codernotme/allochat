@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { api } from '@/convex/_generated/api';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,7 @@ import { Icon } from '@iconify/react';
 export function UserMenu() {
   const user = useQuery(api.users.getCurrentUser);
   const { signOut } = useAuthActions();
+  const router = useRouter();
   const profileHref = user?._id ? `/profile/${user._id}` : '/settings/profile';
 
   return (
@@ -89,7 +91,10 @@ export function UserMenu() {
 
         <DropdownMenuItem
           className="text-destructive focus:text-destructive flex items-center gap-2 cursor-pointer"
-          onClick={() => signOut()}
+          onClick={async () => {
+            await signOut();
+            router.replace('/sign-in');
+          }}
         >
           <Icon icon="solar:logout-2-linear" className="size-4" />
           Sign Out

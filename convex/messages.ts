@@ -35,8 +35,24 @@ export const listMessages = query({
     const resultsWithUsers = await Promise.all(
       page.page.map(async (msg) => {
         const user = await ctx.db.get(msg.senderId);
+        let resolvedContent = msg.content;
+
+        if (msg.type === 'media') {
+          const apiStorageMatch = msg.content.match(/\/api\/storage\/([^/?#]+)/i);
+          const convexStorageMatch = msg.content.match(/convex\.site\/api\/storage\/([^/?#]+)/i);
+          const storageId = apiStorageMatch?.[1] || convexStorageMatch?.[1];
+
+          if (storageId) {
+            const liveUrl = await ctx.storage.getUrl(storageId as any);
+            if (liveUrl) {
+              resolvedContent = liveUrl;
+            }
+          }
+        }
+
         return {
           ...msg,
+          content: resolvedContent,
           sender: user ? {
             name: user.displayName || user.username,
             image: user.avatar ? await ctx.storage.getUrl(user.avatar as any) : null,

@@ -8,7 +8,7 @@ import { MessageInput } from '@/components/chat/MessageInput';
 import { MemberPanel } from '@/components/room/MemberPanel';
 import { CallRoom } from '@/components/room/CallRoom';
 import { PinnedMessages } from '@/components/room/PinnedMessages';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useMutation } from 'convex/react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -17,11 +17,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Icon } from '@iconify/react';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 type Props = { roomId: Id<'rooms'> };
 
 export function RoomView({ roomId }: Props) {
+  const router = useRouter();
   const room = useQuery(api.rooms.getRoom, { roomId });
+  const membership = useQuery(api.rooms.getRoomMembership, { roomId });
   const activeCall = useQuery(api.calls.getActiveCall, { roomId });
   const startCall = useMutation(api.calls.startCall);
   
@@ -31,8 +35,46 @@ export function RoomView({ roomId }: Props) {
   const [joining, setJoining] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const [autoJoining, setAutoJoining] = useState(false);
+  const hasHandledAccessRef = useRef(false);
   const joinRoom = useMutation(api.rooms.joinRoom);
-  useQuery(api.rooms.getRoomMembership, { roomId });
+
+  useEffect(() => {
+    if (!room || room === null || membership === undefined || hasHandledAccessRef.current) {
+      return;
+    }
+
+    if (membership) {
+      hasHandledAccessRef.current = true;
+      return;
+    }
+
+    const attemptAccess = async () => {
+      if (room.type === 'public' || room.type === 'community') {
+        try {
+          setAutoJoining(true);
+          await joinRoom({ roomId });
+        } catch {
+          toast.error('Unable to join this room right now.');
+          router.replace('/lobby');
+        } finally {
+          setAutoJoining(false);
+        }
+        return;
+      }
+
+      if (room.password) {
+        setShowJoinDialog(true);
+        return;
+      }
+
+      toast.error('This room is private. Access denied.');
+      router.replace('/lobby');
+    };
+
+    hasHandledAccessRef.current = true;
+    void attemptAccess();
+  }, [room, membership, joinRoom, roomId, router]);
 
   if (room === undefined) {
     return (
@@ -51,6 +93,19 @@ export function RoomView({ roomId }: Props) {
         <Icon icon="solar:danger-triangle-linear" className="text-muted-foreground size-10" />
         <h2 className="text-xl font-bold">Room not found</h2>
         <p className="text-muted-foreground text-sm">This room might have been deleted.</p>
+      </div>
+    );
+  }
+
+  const hasAccess = !!membership;
+
+  if (!hasAccess && (autoJoining || room?.type === 'public' || room?.type === 'community')) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="border-primary size-8 animate-spin rounded-full border-2 border-t-transparent" />
+          <p className="text-muted-foreground text-sm">Joining room...</p>
+        </div>
       </div>
     );
   }
@@ -130,7 +185,7 @@ export function RoomView({ roomId }: Props) {
 
         {/* Messages / Call */}
         <div className="relative flex min-h-0 flex-1 flex-col">
-          {inCall ? (
+          {hasAccess && inCall ? (
             <div className="flex-1 p-3 md:p-4">
               <CallRoom 
                 roomId={roomId} 
@@ -138,13 +193,21 @@ export function RoomView({ roomId }: Props) {
                 onLeave={() => setInCall(false)} 
               />
             </div>
-          ) : (
+          ) : hasAccess ? (
             <MessageList roomId={roomId} />
+          ) : (
+            <div className="flex flex-1 items-center justify-center p-6 text-center">
+              <div className="space-y-2">
+                <Icon icon="solar:lock-keyhole-linear" className="text-muted-foreground mx-auto size-8" />
+                <p className="text-sm font-medium">Access required</p>
+                <p className="text-muted-foreground text-xs">Join this room to view and send messages.</p>
+              </div>
+            </div>
           )}
         </div>
 
         {/* Input */}
-        {!inCall && <MessageInput roomId={roomId} />}
+        {!inCall && hasAccess && <MessageInput roomId={roomId} />}
       </div>
 
       {/* Pinned Messages Panel */}

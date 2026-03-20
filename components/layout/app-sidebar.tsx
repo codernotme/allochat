@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -16,6 +17,7 @@ import { Icon } from '@iconify/react';
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { signOut } = useAuthActions(); // Keep original signOut from useAuthActions
   const user = useQuery(api.users.getCurrentUser);
   const { xpInCurrentLevel, xpToNextLevel } = getLevelFromXP(user?.xp || 0);
@@ -87,7 +89,10 @@ export function AppSidebar() {
           {!collapsed && <span>Collapse</span>}
         </button>
         <button
-          onClick={() => signOut()}
+          onClick={async () => {
+            await signOut();
+            router.replace('/sign-in');
+          }}
           className={cn(
             'text-muted-foreground hover:bg-destructive/10 hover:text-destructive flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
             collapsed && 'justify-center'
