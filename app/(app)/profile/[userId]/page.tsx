@@ -1,9 +1,10 @@
 'use client';
 
-import { useQuery } from 'convex/react';
+import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -12,16 +13,41 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Icon } from '@iconify/react';
+import { toast } from 'sonner';
 
 export default function UserProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const userId = params.userId as Id<'users'>;
   const user = useQuery(api.users.getUserProfile, { userId });
   const currentUser = useQuery(api.users.getCurrentUser);
+  const sendFriendRequest = useMutation(api.users.sendFriendRequest);
+  const sendDirectMessage = useMutation(api.messages.sendDirectMessage);
+  const [friendSent, setFriendSent] = useState(false);
   const isOwnProfile = currentUser?._id === userId;
 
   if (user === undefined) return <div className="p-8 text-center">Loading profile…</div>;
   if (!user) return <div className="p-8 text-center">User not found</div>;
+
+  async function handleAddFriend() {
+    try {
+      await sendFriendRequest({ targetId: userId });
+      setFriendSent(true);
+      toast.success('Friend request sent!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to send request');
+    }
+  }
+
+  async function handleMessage() {
+    if (!currentUser) return;
+    try {
+      // Open DM conversation – navigate to DM page with userId
+      router.push(`/messages/${userId}`);
+    } catch {
+      toast.error('Could not open conversation');
+    }
+  }
 
   return (
     <div className="mx-auto max-w-4xl p-6">
@@ -47,12 +73,23 @@ export default function UserProfilePage() {
             </Link>
           ) : (
             <>
-              <Button>Add Friend</Button>
-              <Button variant="secondary">Message</Button>
+              <Button
+                onClick={handleAddFriend}
+                disabled={friendSent}
+                variant={friendSent ? 'secondary' : 'default'}
+              >
+                <Icon icon={friendSent ? 'solar:check-circle-linear' : 'solar:user-plus-rounded-linear'} className="size-4 mr-2" />
+                {friendSent ? 'Request Sent' : 'Add Friend'}
+              </Button>
+              <Button variant="secondary" onClick={handleMessage}>
+                <Icon icon="solar:chat-line-linear" className="size-4 mr-2" />
+                Message
+              </Button>
             </>
           )}
         </div>
       </div>
+
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left Column: Bio & Info */}

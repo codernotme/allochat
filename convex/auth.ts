@@ -22,7 +22,7 @@ const buildDisplayName = (email?: string, name?: string, username?: string) => {
 const getDefaultUserData = (email?: string, name?: string, username?: string) => {
   const baseUsername = buildBaseUsername(email, name, username);
   const now = Date.now();
-  
+
   return {
     email: email as string,
     username: baseUsername,
@@ -86,9 +86,8 @@ const providers = [
     id: 'resend',
     maxAge: 10 * 60,
     generateVerificationToken: async () => {
-      const array = new Uint8Array(4);
-      crypto.getRandomValues(array);
-      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+      const code = Math.floor(100000 + Math.random() * 900000); // always 6 digits
+      return code.toString();
     },
     async sendVerificationRequest({ identifier: email, url, token }) {
       const resendApi = process.env.RESEND_API_KEY || process.env.RESEND_API;
@@ -109,19 +108,41 @@ const providers = [
         body: JSON.stringify({
           from: `AlloChat <${fromEmail}>`,
           to: [email],
-          subject: "Verify your email - AlloChat",
+          subject: "Your AlloChat verification code",
           html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-              <h2 style="color: #0f172a; margin-bottom: 16px;">Welcome to AlloChat!</h2>
-              <p style="color: #475569; font-size: 16px; line-height: 24px; margin-bottom: 24px;">To complete your sign-up, please use the following verification code:</p>
-              <div style="background-color: #f1f5f9; padding: 16px; border-radius: 6px; text-align: center; margin-bottom: 24px;">
-                <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #020617;">${token}</span>
-              </div>
-              <p style="color: #64748b; font-size: 14px;">This code will expire in 10 minutes. If you didn't request this email, you can safely ignore it.</p>
-              <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-              <p style="color: #94a3b8; font-size: 12px; text-align: center;">&copy; ${new Date().getFullYear()} AlloChat. All rights reserved.</p>
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; background-color: #ffffff;">
+
+            <!-- Header -->
+            <div style="background-color: #0f172a; border-radius: 12px 12px 0 0; padding: 32px 40px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">AlloChat</h1>
             </div>
-          `,
+
+            <!-- Body -->
+            <div style="border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px; padding: 40px;">
+              <h2 style="color: #0f172a; font-size: 20px; font-weight: 600; margin: 0 0 12px;">Verify your email address</h2>
+              <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin: 0 0 32px;">
+                Use the code below to complete your sign-in. It expires in <strong>10 minutes</strong>.
+              </p>
+
+              <!-- Code block -->
+              <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 10px; padding: 28px; text-align: center; margin-bottom: 32px;">
+                <p style="color: #94a3b8; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 10px;">Verification Code</p>
+                <span style="font-size: 42px; font-weight: 800; letter-spacing: 10px; color: #0f172a; font-variant-numeric: tabular-nums;">${token}</span>
+              </div>
+
+              <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0;">
+                If you didn't request this, you can safely ignore this email. Your account will not be affected.
+              </p>
+
+              <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 32px 0;" />
+
+              <p style="color: #cbd5e1; font-size: 12px; text-align: center; margin: 0;">
+                &copy; ${new Date().getFullYear()} AlloChat &nbsp;·&nbsp; All rights reserved
+              </p>
+            </div>
+
+          </div>
+        `,
         }),
       });
 
@@ -138,45 +159,40 @@ const providers = [
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers,
   callbacks: {
-    async createOrUpdateUser(ctx, args) {
-      const { email, name, username } = getProfileStrings(args.profile);
-      const defaults = getDefaultUserData(email, name, username);
+    const { email, name, username } = getProfileStrings(args.profile);
+    const defaults = getDefaultUserData(email, name, username);
 
-      if (args.existingUserId) {
-        const current = await ctx.db.get(args.existingUserId);
-        if (!current) {
-          throw new Error('User not found during auth update');
-        }
+    let userId = args.existingUserId;
 
-        const patch: Record<string, unknown> = {
-          updatedAt: Date.now(),
-        };
+    // 1. If no existing session, check for another account with the same email
+    if (!userId && email) {
+      const existingUser = await ctx.db
+        .query('users')
+        .withIndex('email', (q) => q.eq('email', email))
+        .unique();
+      if (existingUser) {
+        userId = existingUser._id;
+      }
+    }
 
-        if (!current.email && defaults.email) patch.email = defaults.email;
-        if (!current.displayName) patch.displayName = defaults.displayName;
-
-        if (!current.username || current.username.length === 0) {
-          patch.username = withEntropy(defaults.username);
-        }
-
-        if (!current.emailVerified && current.email) {
-          patch.emailVerified = true;
-        }
-
-        await ctx.db.patch(args.existingUserId, patch);
-        return args.existingUserId;
+    if (userId) {
+      const current = await ctx.db.get(userId);
+      if (!current) {
+        throw new Error('User not found during auth update');
       }
 
-      const existingUsers = await ctx.db.query('users').take(1);
-      const isFirstUser = existingUsers.length === 0;
+      const patch: Record<string, unknown> = {
+        updatedAt: Date.now(),
+      };
 
-      const userId = await ctx.db.insert('users', {
-        ...defaults,
-        username: withEntropy(defaults.username),
-        role: isFirstUser ? 'owner' : 'user',
-        emailVerified: true,
-      });
-      return userId;
-    },
-  },
-});
+      // Merge metadata if missing
+      if (!current.email && defaults.email) patch.email = defaults.email;
+      if (!current.displayName || current.displayName === 'User') {
+        patch.displayName = defaults.displayName;
+      }
+
+      if (!current.username || current.username.length === 0 || current.username.startsWith('user')) {
+        // Only update username if the one we have is generic or missing
+        // but avoid overwriting a custom username if the new one is just a default
+        if (username) {
+          patch.username = username; // User provided a specific

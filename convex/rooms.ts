@@ -106,19 +106,36 @@ export const searchRooms = query({
   },
 });
 
+export const getRoomMembership = query({
+  args: { roomId: v.id('rooms') },
+  returns: v.union(v.any(), v.null()),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    return await ctx.db
+      .query('roomMembers')
+      .withIndex('byRoomAndUser', (q) => q.eq('roomId', args.roomId).eq('userId', userId))
+      .unique();
+  },
+});
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 export const createRoom = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
+    topic: v.optional(v.string()),
     type: v.union(
       v.literal('public'), v.literal('private'),
       v.literal('secret'), v.literal('community')
     ),
     category: v.string(),
+    password: v.optional(v.string()),
+    maxUsers: v.optional(v.number()),
     allowCalls: v.optional(v.boolean()),
     allowMedia: v.optional(v.boolean()),
+    requireVerification: v.optional(v.boolean()),
   },
   returns: v.id('rooms'),
   handler: async (ctx, args) => {
@@ -135,12 +152,15 @@ export const createRoom = mutation({
       name: args.name,
       slug,
       description: args.description,
+      topic: args.topic,
       type: args.type,
+      password: args.password,
       category: args.category,
+      maxUsers: args.maxUsers,
       tags: [],
       allowCalls: args.allowCalls ?? true,
       allowMedia: args.allowMedia ?? true,
-      requireVerification: false,
+      requireVerification: args.requireVerification ?? false,
       enabledAddons: [],
       ownerId: userId,
       isVerified: false,
@@ -176,6 +196,7 @@ export const createRoom = mutation({
     return roomId;
   },
 });
+
 
 export const joinRoom = mutation({
   args: { roomId: v.id('rooms'), password: v.optional(v.string()) },

@@ -7,12 +7,16 @@ import { MessageList } from '@/components/chat/MessageList';
 import { MessageInput } from '@/components/chat/MessageInput';
 import { MemberPanel } from '@/components/room/MemberPanel';
 import { CallRoom } from '@/components/room/CallRoom';
+import { PinnedMessages } from '@/components/room/PinnedMessages';
 import { LevelBadge } from '@/components/gamification/LevelBadge';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useMutation } from 'convex/react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Icon } from '@iconify/react';
 
@@ -25,6 +29,12 @@ export function RoomView({ roomId }: Props) {
   
   const [showMembers, setShowMembers] = useState(true);
   const [inCall, setInCall] = useState(false);
+  const [showPinned, setShowPinned] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const joinRoom = useMutation(api.rooms.joinRoom);
+  const membership = useQuery(api.rooms.getRoomMembership, { roomId });
 
   if (room === undefined) {
     return (
@@ -74,7 +84,7 @@ export function RoomView({ roomId }: Props) {
               <p className="text-muted-foreground truncate text-xs font-medium opacity-80">{room.topic}</p>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {!inCall && (
               <Button
                 variant={activeCall ? "default" : "secondary"}
@@ -101,6 +111,15 @@ export function RoomView({ roomId }: Props) {
                 {room.onlineCount} online
               </span>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn("hover:bg-accent h-9 w-9 rounded-lg", showPinned && "bg-accent")}
+              onClick={() => setShowPinned(!showPinned)}
+              aria-label="Toggle pinned messages"
+            >
+              <Icon icon="solar:pin-linear" className="size-4" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -132,10 +151,55 @@ export function RoomView({ roomId }: Props) {
         {!inCall && <MessageInput roomId={roomId} />}
       </div>
 
+      {/* Pinned Messages Panel */}
+      {showPinned && (
+        <PinnedMessages roomId={roomId} onClose={() => setShowPinned(false)} />
+      )}
+
       {/* Member Panel */}
       {showMembers && (
         <MemberPanel roomId={roomId} />
       )}
+
+      {/* Join Room Dialog */}
+      <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Join Room — Password Required</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
+            <Label htmlFor="room-pw">Enter Room Password</Label>
+            <Input
+              id="room-pw"
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="Room password"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  // handled by button
+                }
+              }}
+            />
+            <Button
+              onClick={async () => {
+                setJoining(true);
+                try {
+                  await joinRoom({ roomId, password: passwordInput });
+                  setShowJoinDialog(false);
+                } catch (err: any) {
+                  import('sonner').then(({ toast }) => toast.error(err.message || 'Wrong password'));
+                } finally {
+                  setJoining(false);
+                }
+              }}
+              disabled={joining}
+            >
+              {joining ? 'Joining…' : 'Join Room'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

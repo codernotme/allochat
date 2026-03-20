@@ -102,6 +102,8 @@ export default defineSchema({
     isDeleted: v.optional(v.boolean()),
     isGuest: v.optional(v.boolean()),
     minAge: v.optional(v.number()),
+    age: v.optional(v.number()),
+    onboardingCompleted: v.optional(v.boolean()),
     consentGiven: v.optional(v.boolean()),
 
     createdAt: v.optional(v.number()),

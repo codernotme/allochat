@@ -17,16 +17,31 @@ export default function FriendsPage() {
   const friends = useQuery(api.users.getFriends);
   const requests = useQuery(api.users.getFriendRequests);
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [findQuery, setFindQuery] = useState('');
+  const searchResults = useQuery(
+    api.users.searchUsers,
+    findQuery.length >= 1 ? { query: findQuery } : 'skip'
+  );
+
   const acceptRequest = useMutation(api.users.acceptFriendRequest);
-  // const sendRequest = useMutation(api.users.sendFriendRequest); // TODO: implement in search
-  
+  const declineRequest = useMutation(api.users.declineFriendRequest);
+  const sendFriendRequest = useMutation(api.users.sendFriendRequest);
+
   async function handleAccept(requestId: any) {
     try {
       await acceptRequest({ requestId });
       toast.success('Friend request accepted.');
     } catch {
       toast.error('Failed to accept request.');
+    }
+  }
+
+  async function handleDecline(requestId: any) {
+    try {
+      await declineRequest({ requestId });
+      toast.success('Request declined.');
+    } catch {
+      toast.error('Failed to decline request.');
     }
   }
 
@@ -99,7 +114,7 @@ export default function FriendsPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => handleAccept(req._id)} className="h-8 shadow-sm">Accept</Button>
-                  <Button size="sm" variant="ghost" className="h-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">Decline</Button>
+                  <Button size="sm" variant="ghost" className="h-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={() => handleDecline(req._id)}>Decline</Button>
                 </div>
               </div>
             ))}
@@ -112,14 +127,56 @@ export default function FriendsPage() {
               <CardTitle className="text-lg">Discover People</CardTitle>
               <CardDescription className="italic">Search for users by username to add them</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-4">
               <div className="flex gap-3">
-                <Input placeholder="Enter @username..." className="bg-background shadow-inner" />
-                <Button>Search</Button>
+                <Input
+                  placeholder="Enter @username..."
+                  className="bg-background shadow-inner"
+                  value={findQuery}
+                  onChange={(e) => setFindQuery(e.target.value)}
+                />
               </div>
-              <p className="text-muted-foreground mt-4 text-center text-xs italic">
-                You can also find people by chatting in public rooms.
-              </p>
+              {searchResults && searchResults.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  {searchResults.map((u: any) => (
+                    <div key={u._id} className="border-border bg-card flex items-center gap-3 rounded-xl border p-3">
+                      <Avatar className="size-10">
+                        <AvatarImage src={u.avatar} />
+                        <AvatarFallback>
+                          <Icon icon="solar:user-linear" className="size-4 text-muted-foreground" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold">{u.displayName || u.username}</p>
+                        <p className="text-xs text-muted-foreground">@{u.username}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Link href={`/profile/${u._id}`}>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs">Profile</Button>
+                        </Link>
+                        <Button size="sm" className="h-7 text-xs" onClick={async () => {
+                          try {
+                            await sendFriendRequest({ targetId: u._id });
+                            toast.success(`Friend request sent to @${u.username}`);
+                          } catch (err: any) {
+                            toast.error(err.message || 'Failed');
+                          }
+                        }}>
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {searchResults?.length === 0 && findQuery && (
+                <p className="text-muted-foreground text-center text-sm italic">No users found for "{findQuery}"</p>
+              )}
+              {!findQuery && (
+                <p className="text-muted-foreground mt-2 text-center text-xs italic">
+                  You can also find people by chatting in public rooms.
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

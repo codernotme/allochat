@@ -74,6 +74,7 @@ export const TIER_PERMISSIONS: Record<SubscriptionTier, Permission[]> = {
   premium: [],
   pro: ['call:record'],
   elite: ['call:record'],
+  vip: ['call:record'],
 };
 
 export function hasPermission(role: Role, permission: Permission): boolean {
