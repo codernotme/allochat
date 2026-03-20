@@ -255,3 +255,33 @@ export const generateUniqueUsername = mutation({
     return finalUsername;
   },
 });
+
+export const findRandomMatch = mutation({
+  args: {},
+  returns: v.union(v.id('users'), v.null()),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error('Not authenticated');
+
+    const currentUser = await ctx.db.get(userId);
+    const users = await ctx.db.query('users').collect();
+
+    const candidates = users.filter((u) => {
+      if (u._id === userId) return false;
+      if (u.isBanned || u.isDeleted) return false;
+      if (u.presenceStatus && u.presenceStatus !== 'online') return false;
+
+      // Prefer users with similar language when available.
+      if (currentUser?.language && u.language) {
+        return currentUser.language === u.language;
+      }
+
+      return true;
+    });
+
+    if (candidates.length === 0) return null;
+
+    const randomIndex = Math.floor(Math.random() * candidates.length);
+    return candidates[randomIndex]._id;
+  },
+});

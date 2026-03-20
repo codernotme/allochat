@@ -43,22 +43,22 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="p-8 flex flex-col gap-8">
+    <div className="flex flex-col gap-8 p-6 md:p-8">
       <div>
-        <h1 className="text-3xl font-bold italic tracking-tight">Admin Overview</h1>
-        <p className="text-muted-foreground">Real-time pulse of the AlloChat community</p>
+        <h1 className="text-3xl font-black tracking-tight md:text-4xl">Admin Overview</h1>
+        <p className="text-muted-foreground mt-1">Real-time pulse of the AlloChat community</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {statCards.map((stat) => (
-          <Card key={stat.label} className="overflow-hidden border-none shadow-sm bg-muted/30">
-            <CardContent className="p-6 flex items-center justify-between">
+          <Card key={stat.label} className="border-border/60 bg-card/70 overflow-hidden">
+            <CardContent className="flex items-center justify-between p-5">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{stat.label}</p>
-                <div className="text-3xl font-black tabular-nums">{stat.value}</div>
+                <p className="text-muted-foreground text-[11px] font-bold uppercase tracking-wider">{stat.label}</p>
+                <div className="text-3xl font-black tabular-nums leading-none">{stat.value}</div>
               </div>
-              <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color}`}>
+              <div className={`rounded-2xl p-3.5 ${stat.bg} ${stat.color}`}>
                 <Icon icon={stat.icon} className="size-6" />
               </div>
             </CardContent>
@@ -66,9 +66,9 @@ export default function AdminPage() {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Moderation Alerts */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 border-border/60 bg-card/70">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -83,7 +83,7 @@ export default function AdminPage() {
           <CardContent>
             <div className="space-y-4">
               {reports?.slice(0, 5).map((report) => (
-                <div key={report._id} className="flex items-center justify-between p-3 rounded-xl border bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                <div key={report._id} className="hover:bg-accent/40 flex cursor-pointer items-center justify-between rounded-xl border border-border/60 bg-background/40 p-3 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="size-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
                       <Icon icon="solar:danger-triangle-linear" className="size-5" />
@@ -106,7 +106,7 @@ export default function AdminPage() {
         </Card>
 
         {/* System Activity */}
-        <Card>
+        <Card className="border-border/60 bg-card/70">
           <CardHeader>
             <CardTitle>System Activity</CardTitle>
             <CardDescription>Latest staff actions</CardDescription>
@@ -123,7 +123,7 @@ export default function AdminPage() {
                      <p className="text-xs font-bold uppercase tracking-tighter text-muted-foreground">
                         {log.action.replace('_', ' ')}
                      </p>
-                     <p className="text-xs italic truncate max-w-[150px]">
+                    <p className="max-w-37.5 text-xs italic truncate">
                         Target: {log.targetType} ({log.targetId.slice(-4)})
                      </p>
                    </div>

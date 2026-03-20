@@ -319,6 +319,40 @@ export default defineSchema({
     .index('byParticipant', ['participantIds'])
     .index('byRoom', ['roomId', 'status']),
 
+  webrtcCalls: defineTable({
+    participantKey: v.string(),
+    callerId: v.id('users'),
+    calleeId: v.id('users'),
+    status: v.union(
+      v.literal('ringing'),
+      v.literal('connecting'),
+      v.literal('active'),
+      v.literal('ended')
+    ),
+    offerSdp: v.optional(v.string()),
+    answerSdp: v.optional(v.string()),
+    disconnectReason: v.optional(v.string()),
+    startedAt: v.optional(v.number()),
+    endedAt: v.optional(v.number()),
+    lastSeenCaller: v.optional(v.number()),
+    lastSeenCallee: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('byParticipantKey', ['participantKey', 'updatedAt'])
+    .index('byCaller', ['callerId', 'updatedAt'])
+    .index('byCallee', ['calleeId', 'updatedAt'])
+    .index('byWebrtcStatus', ['status', 'updatedAt']),
+
+  webrtcIceCandidates: defineTable({
+    callId: v.id('webrtcCalls'),
+    senderId: v.id('users'),
+    candidate: v.string(),
+    sdpMid: v.optional(v.string()),
+    sdpMLineIndex: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index('byCall', ['callId', 'createdAt']),
+
   // ══════════════════════════════════════════
   //  SOCIAL
   // ══════════════════════════════════════════

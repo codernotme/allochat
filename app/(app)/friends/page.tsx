@@ -141,7 +141,7 @@ export default function FriendsPage() {
                   {searchResults.map((u: any) => (
                     <div key={u._id} className="border-border bg-card flex items-center gap-3 rounded-xl border p-3">
                       <Avatar className="size-10">
-                        <AvatarImage src={u.avatar} />
+                        <AvatarImage src={u.avatarUrl} />
                         <AvatarFallback>
                           <Icon icon="solar:user-linear" className="size-4 text-muted-foreground" />
                         </AvatarFallback>

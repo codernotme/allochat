@@ -75,10 +75,19 @@ export function DMConversationView({ userId }: Props) {
           </p>
         </div>
         <div className="ml-auto">
-          <Link href={`/profile/${userId}`} className="hover:bg-muted rounded-lg p-1.5 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-            <Icon icon="solar:user-circle-linear" className="size-4" />
-            Profile
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/random/call/${userId}`}
+              className="hover:bg-muted rounded-lg p-1.5 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              <Icon icon="solar:videocamera-record-linear" className="size-4" />
+              Video Call
+            </Link>
+            <Link href={`/profile/${userId}`} className="hover:bg-muted rounded-lg p-1.5 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+              <Icon icon="solar:user-circle-linear" className="size-4" />
+              Profile
+            </Link>
+          </div>
         </div>
       </div>
 

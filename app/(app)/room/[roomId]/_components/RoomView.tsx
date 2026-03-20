@@ -8,11 +8,9 @@ import { MessageInput } from '@/components/chat/MessageInput';
 import { MemberPanel } from '@/components/room/MemberPanel';
 import { CallRoom } from '@/components/room/CallRoom';
 import { PinnedMessages } from '@/components/room/PinnedMessages';
-import { LevelBadge } from '@/components/gamification/LevelBadge';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useMutation } from 'convex/react';
-import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -34,7 +32,7 @@ export function RoomView({ roomId }: Props) {
   const [passwordInput, setPasswordInput] = useState('');
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const joinRoom = useMutation(api.rooms.joinRoom);
-  const membership = useQuery(api.rooms.getRoomMembership, { roomId });
+  useQuery(api.rooms.getRoomMembership, { roomId });
 
   if (room === undefined) {
     return (
@@ -58,17 +56,17 @@ export function RoomView({ roomId }: Props) {
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="from-background via-background to-muted/20 flex h-full overflow-hidden bg-linear-to-b">
       {/* Main chat column */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Room Header */}
-        <div className="border-border bg-card/50 flex items-center gap-3 border-b px-6 py-4 backdrop-blur-md">
-          <div className="bg-primary/10 flex size-10 items-center justify-center rounded-xl text-2xl shadow-inner">
+        <div className="border-border/70 bg-card/70 flex items-center gap-3 border-b px-4 py-3 backdrop-blur-md md:px-6 md:py-4">
+          <div className="bg-primary/10 flex size-10 items-center justify-center rounded-xl text-2xl shadow-inner ring-1 ring-border/40">
             {room.icon || <Icon icon="solar:chat-round-line-linear" className="size-5 text-primary" />}
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
             <div className="flex items-center gap-2">
-              <h2 className="truncate text-lg font-bold tracking-tight">{room.name}</h2>
+              <h2 className="truncate text-lg font-black tracking-tight">{room.name}</h2>
               {room.isVerified && (
                 <TooltipProvider>
                   <Tooltip>
@@ -80,9 +78,7 @@ export function RoomView({ roomId }: Props) {
                 </TooltipProvider>
               )}
             </div>
-            {room.topic && (
-              <p className="text-muted-foreground truncate text-xs font-medium opacity-80">{room.topic}</p>
-            )}
+            {room.topic && <p className="text-muted-foreground truncate text-xs opacity-80">{room.topic}</p>}
           </div>
           <div className="flex items-center gap-2">
             {!inCall && (
@@ -102,7 +98,7 @@ export function RoomView({ roomId }: Props) {
                 {activeCall ? 'Join Call' : 'Start Call'}
               </Button>
             )}
-            <div className="bg-accent/50 hidden items-center gap-2 rounded-full px-3 py-1.5 md:flex">
+            <div className="bg-accent/50 hidden items-center gap-2 rounded-full border border-border/60 px-3 py-1.5 md:flex">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -135,7 +131,7 @@ export function RoomView({ roomId }: Props) {
         {/* Messages / Call */}
         <div className="relative flex min-h-0 flex-1 flex-col">
           {inCall ? (
-            <div className="flex-1 p-4">
+            <div className="flex-1 p-3 md:p-4">
               <CallRoom 
                 roomId={roomId} 
                 roomName={room.name} 
@@ -187,8 +183,9 @@ export function RoomView({ roomId }: Props) {
                 try {
                   await joinRoom({ roomId, password: passwordInput });
                   setShowJoinDialog(false);
-                } catch (err: any) {
-                  import('sonner').then(({ toast }) => toast.error(err.message || 'Wrong password'));
+                } catch (err: unknown) {
+                  const errorMessage = err instanceof Error ? err.message : 'Wrong password';
+                  import('sonner').then(({ toast }) => toast.error(errorMessage));
                 } finally {
                   setJoining(false);
                 }

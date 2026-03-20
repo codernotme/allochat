@@ -45,6 +45,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'solar:cup-star-linear',
     section: 'main',
   },
+  {
+    id: 'random-match',
+    label: 'Random Match',
+    href: '/random',
+    icon: 'solar:shuffle-linear',
+    section: 'main',
+  },
   // ─── Social ────────────────────────────────────
   {
     id: 'friends',

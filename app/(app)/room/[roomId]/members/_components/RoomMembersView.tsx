@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 type Props = { roomId: Id<'rooms'> };
 
@@ -59,7 +60,7 @@ export function RoomMembersView({ roomId }: Props) {
               <div className="relative">
                 <div className="bg-primary/10 flex size-10 shrink-0 items-center justify-center rounded-full">
                   {m.user?.image ? (
-                    <img src={m.user.image} className="size-10 rounded-full object-cover" alt="" />
+                    <Image src={m.user.image} className="size-10 rounded-full object-cover" alt="" />
                   ) : (
                     <Icon icon="solar:user-circle-linear" className="size-5 text-primary" />
                   )}

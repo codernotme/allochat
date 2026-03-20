@@ -26,6 +26,7 @@ import type * as seed from "../seed.js";
 import type * as storage from "../storage.js";
 import type * as trivia from "../trivia.js";
 import type * as users from "../users.js";
+import type * as webrtc from "../webrtc.js";
 
 import type {
   ApiFromModules,
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   storage: typeof storage;
   trivia: typeof trivia;
   users: typeof users;
+  webrtc: typeof webrtc;
 }>;
 
 /**
