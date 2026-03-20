@@ -12,8 +12,6 @@ const isAuthPage = createRouteMatcher([
   '/forgot-password(.*)',
   '/reset-password(.*)',
   '/verify-email(.*)',
-  '/magic-link(.*)',
-  '/onboarding(.*)',
 ]);
 
 const isPublicPage = createRouteMatcher([
@@ -93,7 +91,10 @@ export default convexAuthNextjsMiddleware(async (request) => {
     return response;
   }
 
-  const response = NextResponse.next();
+  const response = (request.nextUrl.pathname === '/' && authenticated) 
+    ? nextjsMiddlewareRedirect(request, '/lobby')
+    : NextResponse.next();
+
   setAnalyticsCookies(request, response);
   return response;
 });

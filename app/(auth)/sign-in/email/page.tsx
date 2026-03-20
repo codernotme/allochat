@@ -3,17 +3,20 @@
 import { useState } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useRouter } from 'next/navigation';
+import { useConvex } from 'convex/react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { api } from '@/convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Icon } from '@iconify/react';
 
 const schema = z.object({
-  email: z.string().email('Invalid email address'),
+  identifier: z.string().min(3, 'Email or username is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -21,6 +24,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function SignInEmailPage() {
   const { signIn } = useAuthActions();
+  const convex = useConvex();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -34,10 +38,24 @@ export default function SignInEmailPage() {
   async function onSubmit(data: FormData) {
     setLoading(true);
     try {
-      await signIn('password', { email: data.email, password: data.password, flow: 'signIn' });
+      let email = data.identifier.trim();
+      
+      // If it looks like a username (no @), resolve it to an email
+      if (!email.includes('@')) {
+        const user = await convex.query(api.users.getUserByUsername, { username: email });
+        if (user && user.email) {
+          email = user.email;
+        } else {
+          toast.error('User not found with this username');
+          setLoading(false);
+          return;
+        }
+      }
+
+      await signIn('password', { email, password: data.password, flow: 'signIn' });
       router.push('/lobby');
-    } catch {
-      toast.error('Invalid email or password');
+    } catch (err) {
+      toast.error('Invalid email/username or password');
     } finally {
       setLoading(false);
     }
@@ -46,22 +64,22 @@ export default function SignInEmailPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1 text-center">
-        <h2 className="text-2xl font-bold">Sign in with email</h2>
-        <p className="text-muted-foreground text-sm">Enter your credentials to continue</p>
+        <h2 className="text-2xl font-bold">Sign in</h2>
+        <p className="text-muted-foreground text-sm">Enter your email or username to continue</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="identifier">Email or Username</Label>
           <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-            {...register('email')}
-            aria-invalid={!!errors.email}
+            id="identifier"
+            type="text"
+            placeholder="you@example.com or your_username"
+            autoComplete="username"
+            {...register('identifier')}
+            aria-invalid={!!errors.identifier}
           />
-          {errors.email && <p className="text-destructive text-xs">{errors.email.message}</p>}
+          {errors.identifier && <p className="text-destructive text-xs">{errors.identifier.message}</p>}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -90,7 +108,7 @@ export default function SignInEmailPage() {
               className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              {showPassword ? '🙈' : '👁️'}
+              <Icon icon={showPassword ? 'solar:eye-closed-bold-duotone' : 'solar:eye-bold-duotone'} className="size-5" />
             </button>
           </div>
           {errors.password && (
