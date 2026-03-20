@@ -24,6 +24,14 @@ export function LobbyView() {
     }
   }, [currentUser, router]);
 
+  if (currentUser === undefined) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
+        <Icon icon="solar:round-alt-fill-line-duotone" className="animate-spin text-primary size-10" />
+      </div>
+    );
+  }
+
   // Query rooms from Convex (will work once schema is deployed)
   const rooms = useQuery((api as any).rooms.listPublicRooms, {
     category: selectedCategory === 'all' ? undefined : selectedCategory,
