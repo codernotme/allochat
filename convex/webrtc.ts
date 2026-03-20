@@ -8,6 +8,8 @@ function makeParticipantKey(a: string, b: string) {
   return [a, b].sort().join('::');
 }
 
+const STALE_CALL_MS = 30_000;
+
 type WebRtcCallRecord = {
   _id: Id<'webrtcCalls'>;
   callerId: Id<'users'>;
@@ -210,5 +212,52 @@ export const endSession = mutation({
     });
 
     return null;
+  },
+});
+
+export const cleanupStaleSessions = mutation({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error('Not authenticated');
+
+    const now = Date.now();
+    const endedIds = new Set<Id<'webrtcCalls'>>();
+
+    const callerSessions = await ctx.db
+      .query('webrtcCalls')
+      .withIndex('byCaller', (q) => q.eq('callerId', userId))
+      .order('desc')
+      .take(20);
+
+    const calleeSessions = await ctx.db
+      .query('webrtcCalls')
+      .withIndex('byCallee', (q) => q.eq('calleeId', userId))
+      .order('desc')
+      .take(20);
+
+    const sessions = [...callerSessions, ...calleeSessions].filter((call) => call.status !== 'ended');
+
+    for (const call of sessions) {
+      if (endedIds.has(call._id)) continue;
+
+      const isCaller = call.callerId === userId;
+      const peerLastSeen = isCaller
+        ? call.lastSeenCallee ?? call.createdAt
+        : call.lastSeenCaller ?? call.createdAt;
+
+      if (now - peerLastSeen > STALE_CALL_MS) {
+        await ctx.db.patch(call._id, {
+          status: 'ended',
+          disconnectReason: 'heartbeat_timeout',
+          endedAt: now,
+          updatedAt: now,
+        });
+        endedIds.add(call._id);
+      }
+    }
+
+    return endedIds.size;
   },
 });

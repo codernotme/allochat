@@ -26,6 +26,10 @@ export const startCall = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error('Not authenticated');
 
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error('Room not found');
+    if (room.allowCalls === false) throw new Error('Calls are disabled for this room');
+
     // Check if call already exists
     const existing = await ctx.db
       .query('calls')
@@ -55,15 +59,13 @@ export const startCall = mutation({
       .withIndex('byRoom', (q) => q.eq('roomId', args.roomId))
       .collect();
 
-    const room = await ctx.db.get(args.roomId);
-
     for (const member of members) {
       if (member.userId !== userId) {
         await ctx.db.insert('notifications', {
           userId: member.userId,
           type: 'call_started',
           title: 'Incoming Call',
-          body: `A ${args.type} call has started in ${room?.name || 'a room'}.`,
+          body: `A ${args.type} call has started in ${room.name || 'a room'}.`,
           icon: '📞',
           link: `/room/${args.roomId}`,
           isRead: false,

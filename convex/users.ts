@@ -25,7 +25,15 @@ export const getUserProfile = query({
   args: { userId: v.id('users') },
   returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.userId);
+    const user = await ctx.db.get(args.userId);
+    if (!user) return null;
+    if (user.avatar) {
+      return {
+        ...user,
+        avatarUrl: await ctx.storage.getUrl(user.avatar as any),
+      };
+    }
+    return user;
   },
 });
 

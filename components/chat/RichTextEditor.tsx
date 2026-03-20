@@ -47,7 +47,7 @@ export function RichTextEditor({ value, onChange, onKeyDown, placeholder, classN
           <Icon icon="solar:text-bold-linear" className="size-3.5" />
         </Button>
         <Button type="button" variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-foreground rounded" onClick={() => insertFormatting('*')} disabled={disabled} title="Italic">
-          <Icon icon="solar:text-italic-linear" className="size-3.5" />
+          <Icon icon="mdi:format-italic" className="size-3.5" />
         </Button>
         <Button type="button" variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-foreground rounded" onClick={() => insertFormatting('~~')} disabled={disabled} title="Strikethrough">
           <Icon icon="solar:text-strikethrough-linear" className="size-3.5" />
@@ -67,7 +67,7 @@ export function RichTextEditor({ value, onChange, onKeyDown, placeholder, classN
           placeholder={placeholder}
           rows={1}
           disabled={disabled}
-          className="scrollbar-none text-foreground placeholder:text-muted-foreground max-h-48 min-h-[1.5rem] flex-1 resize-none bg-transparent text-sm outline-none py-1.5"
+          className="scrollbar-none text-foreground placeholder:text-muted-foreground max-h-48 min-h-6 flex-1 resize-none bg-transparent text-sm outline-none py-1.5"
         />
         <div className="pb-1">
           <EmoticonPicker onPick={(t) => insertFormatting(t, '')} />

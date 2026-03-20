@@ -31,6 +31,7 @@ export function PeerVideoCall({ peerId }: Props) {
   const addIceCandidate = useMutation(api.webrtc.addIceCandidate);
   const endSession = useMutation(api.webrtc.endSession);
   const heartbeat = useMutation(api.webrtc.heartbeat);
+  const cleanupStaleSessions = useMutation(api.webrtc.cleanupStaleSessions);
 
   const candidates = useQuery(api.webrtc.listIceCandidates, session?._id ? { callId: session._id } : 'skip');
 
@@ -153,26 +154,27 @@ export function PeerVideoCall({ peerId }: Props) {
     if (!session || !currentUser || !pcRef.current) return;
 
     const pc = pcRef.current;
+    const activeSession = session;
 
     async function runNegotiation() {
       try {
-        if (isCaller && !session.offerSdp && !offerCreatedRef.current) {
+        if (isCaller && !activeSession.offerSdp && !offerCreatedRef.current) {
           offerCreatedRef.current = true;
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
-          await setOffer({ callId: session._id, sdp: offer.sdp ?? '' });
+          await setOffer({ callId: activeSession._id, sdp: offer.sdp ?? '' });
         }
 
-        if (!isCaller && session.offerSdp && !pc.currentRemoteDescription && !answerCreatedRef.current) {
+        if (!isCaller && activeSession.offerSdp && !pc.currentRemoteDescription && !answerCreatedRef.current) {
           answerCreatedRef.current = true;
-          await pc.setRemoteDescription({ type: 'offer', sdp: session.offerSdp });
+          await pc.setRemoteDescription({ type: 'offer', sdp: activeSession.offerSdp });
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          await setAnswer({ callId: session._id, sdp: answer.sdp ?? '' });
+          await setAnswer({ callId: activeSession._id, sdp: answer.sdp ?? '' });
         }
 
-        if (isCaller && session.answerSdp && !pc.currentRemoteDescription) {
-          await pc.setRemoteDescription({ type: 'answer', sdp: session.answerSdp });
+        if (isCaller && activeSession.answerSdp && !pc.currentRemoteDescription) {
+          await pc.setRemoteDescription({ type: 'answer', sdp: activeSession.answerSdp });
         }
       } catch {
         setError('Negotiation failed. Try ending and starting again.');
@@ -213,10 +215,11 @@ export function PeerVideoCall({ peerId }: Props) {
   useEffect(() => {
     if (!session?._id) return;
     const interval = setInterval(() => {
+      void cleanupStaleSessions({});
       void heartbeat({ callId: session._id });
     }, 8000);
     return () => clearInterval(interval);
-  }, [heartbeat, session?._id]);
+  }, [cleanupStaleSessions, heartbeat, session?._id]);
 
   useEffect(() => {
     const local = localStreamRef.current;
@@ -261,6 +264,18 @@ export function PeerVideoCall({ peerId }: Props) {
           <Icon icon="solar:danger-triangle-linear" className="text-destructive size-8" />
           <p className="text-sm font-semibold">Call unavailable</p>
           <p className="text-muted-foreground text-xs">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (session?.status === 'ended') {
+    return (
+      <Card className="border-border/60 bg-card/70">
+        <CardContent className="flex min-h-130 flex-col items-center justify-center gap-3 text-center">
+          <Icon icon="solar:phone-calling-rounded-linear" className="text-muted-foreground size-8" />
+          <p className="text-sm font-semibold">Call ended</p>
+          <p className="text-muted-foreground text-xs">This session was closed or timed out due to heartbeat inactivity.</p>
         </CardContent>
       </Card>
     );

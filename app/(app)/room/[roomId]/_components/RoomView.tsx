@@ -81,7 +81,7 @@ export function RoomView({ roomId }: Props) {
             {room.topic && <p className="text-muted-foreground truncate text-xs opacity-80">{room.topic}</p>}
           </div>
           <div className="flex items-center gap-2">
-            {!inCall && (
+            {!inCall && room.allowCalls !== false && (
               <Button
                 variant={activeCall ? "default" : "secondary"}
                 size="sm"

@@ -55,12 +55,14 @@ export const getRoomMembers = query({
     const membersWithUsers = await Promise.all(
       memberships.map(async (m) => {
         const user = await ctx.db.get(m.userId);
+        const avatarUrl = user?.avatar ? await ctx.storage.getUrl(user.avatar as any) : null;
         return {
           ...m,
           user: user ? {
             name: user.displayName || user.username,
             username: user.username,
-            image: user.avatar,
+            image: avatarUrl,
+            avatarUrl,
             level: user.level || 1,
             xp: user.xp || 0,
             isOnline: user.presenceStatus === 'online',
@@ -300,6 +302,38 @@ export const updateRoom = mutation({
 
     const { roomId, ...updates } = args;
     await ctx.db.patch(args.roomId, { ...updates, updatedAt: Date.now() });
+    return null;
+  },
+});
+
+export const updateMemberRole = mutation({
+  args: {
+    roomId: v.id('rooms'),
+    memberUserId: v.id('users'),
+    role: v.union(v.literal('admin'), v.literal('moderator'), v.literal('member')),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error('Not authenticated');
+
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error('Room not found');
+
+    const actor = await ctx.db.get(userId);
+    const isPlatformAdmin = actor?.role === 'admin' || actor?.role === 'owner';
+    const isRoomOwner = room.ownerId === userId;
+    if (!isRoomOwner && !isPlatformAdmin) throw new Error('Not authorized');
+
+    const membership = await ctx.db
+      .query('roomMembers')
+      .withIndex('byRoomAndUser', (q) => q.eq('roomId', args.roomId).eq('userId', args.memberUserId))
+      .unique();
+
+    if (!membership) throw new Error('Member not found');
+    if (membership.role === 'owner') throw new Error('Owner rank cannot be changed');
+
+    await ctx.db.patch(membership._id, { role: args.role });
     return null;
   },
 });
