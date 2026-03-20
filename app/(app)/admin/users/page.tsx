@@ -92,7 +92,7 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <Avatar className="size-8">
-                        <AvatarImage src={user.avatar?.startsWith('http') ? user.avatar : `/api/storage/${user.avatar}`} />
+                        <AvatarImage src={(user as any).avatarUrl || user.avatar} />
                         <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">

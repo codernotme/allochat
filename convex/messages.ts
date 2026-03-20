@@ -39,7 +39,7 @@ export const listMessages = query({
           ...msg,
           sender: user ? {
             name: user.displayName || user.username,
-            image: user.avatar,
+            image: user.avatar ? await ctx.storage.getUrl(user.avatar as any) : null,
             level: user.level || 1,
           } : null,
         };

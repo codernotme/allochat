@@ -118,7 +118,7 @@ export default function ProfileSettingsPage() {
                 {/* Avatar Section */}
                 <div className="flex items-center gap-4">
                   <Avatar className="size-20 border-2 border-primary/20">
-                    <AvatarImage src={user.avatar?.startsWith('http') ? user.avatar : `/api/storage/${user.avatar}`} />
+                    <AvatarImage src={(user as any).avatarUrl || user.avatar} />
                     <AvatarFallback>
                       <Icon icon="solar:user-circle-linear" className="size-8 text-muted-foreground" />
                     </AvatarFallback>

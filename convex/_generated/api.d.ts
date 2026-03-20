@@ -14,6 +14,7 @@ import type * as auth from "../auth.js";
 import type * as badges from "../badges.js";
 import type * as calls from "../calls.js";
 import type * as crons from "../crons.js";
+import type * as files from "../files.js";
 import type * as gamification from "../gamification.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   badges: typeof badges;
   calls: typeof calls;
   crons: typeof crons;
+  files: typeof files;
   gamification: typeof gamification;
   http: typeof http;
   messages: typeof messages;

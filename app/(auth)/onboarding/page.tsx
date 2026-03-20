@@ -35,6 +35,8 @@ export default function OnboardingPage() {
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
+  const [avatarStorageId, setAvatarStorageId] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   
   // Age State
   const [age, setAge] = useState<string>('');
@@ -47,6 +49,7 @@ export default function OnboardingPage() {
   const [github, setGithub] = useState('');
   
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [hasInit, setHasInit] = useState(false);
 
   // Auto-fill from current user data
@@ -57,6 +60,9 @@ export default function OnboardingPage() {
       }
       if (currentUser.username && !currentUser.username.startsWith('user')) {
         setUsername(currentUser.username);
+      }
+      if ((currentUser as any).avatarUrl) {
+        setAvatarUrl((currentUser as any).avatarUrl);
       }
       setHasInit(true);
     }
@@ -71,7 +77,31 @@ export default function OnboardingPage() {
     );
   }
 
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const updateProfile = useMutation(api.users.updateProfile);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const postUrl = await generateUploadUrl();
+      const result = await fetch(postUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      const { storageId } = await result.json();
+      setAvatarStorageId(storageId);
+      setAvatarUrl(URL.createObjectURL(file));
+      toast.success('Avatar uploaded successfully!');
+    } catch (err) {
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   async function handleFinish() {
     setLoading(true);
@@ -84,13 +114,14 @@ export default function OnboardingPage() {
         displayName: displayName.trim(),
         username: username.trim(),
         bio: bio.trim(),
+        avatar: avatarStorageId || undefined,
         interests: selectedInterests,
         age: age ? parseInt(age) : undefined,
         socialLinks: socialLinks.length > 0 ? socialLinks : undefined,
         onboardingCompleted: true,
       });
       toast.success('Welcome to AlloChat!');
-      router.push('/lobby');
+      router.push('/');
     } catch (err) {
       toast.error('Something went wrong. Please try again.');
     } finally {
@@ -128,10 +159,25 @@ export default function OnboardingPage() {
       {step === 'Profile' && (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col items-center gap-3">
-            <div className="bg-muted flex size-24 cursor-pointer items-center justify-center rounded-full text-4xl hover:opacity-80">
-              <Icon icon="solar:user-circle-linear" className="size-12 text-muted-foreground" />
+            <div className="relative">
+              <div className="bg-muted flex size-24 items-center justify-center rounded-full overflow-hidden border-2 border-border shadow-md">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <Icon icon="solar:user-circle-linear" className="size-12 text-muted-foreground" />
+                )}
+                {uploading && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <Icon icon="solar:refresh-linear" className="animate-spin text-white size-6" />
+                  </div>
+                )}
+              </div>
+              <label className="absolute bottom-0 right-0 bg-primary text-primary-foreground size-8 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-primary/90 transition-all">
+                <Icon icon="solar:camera-linear" className="size-4" />
+                <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={uploading} />
+              </label>
             </div>
-            <p className="text-muted-foreground text-xs">Click to upload avatar (coming soon)</p>
+            <p className="text-muted-foreground text-xs">{uploading ? 'Uploading…' : 'Update your avatar'}</p>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="displayName">Display Name</Label>

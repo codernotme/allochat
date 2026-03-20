@@ -27,7 +27,7 @@ export function UserMenu() {
           aria-label="User menu"
         >
           <Avatar className="size-8 ring-2 ring-border">
-            <AvatarImage src={user?.avatar} />
+            <AvatarImage src={(user as any)?.avatarUrl || user?.avatar} />
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
               {user?.displayName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || (
                 <Icon icon="solar:user-circle-linear" className="size-4" />

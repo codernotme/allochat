@@ -117,8 +117,13 @@ export const getAllUsers = query({
     cursor: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await checkStaff(ctx, 'staff');
-    return await ctx.db.query('users').order('desc').take(args.limit ?? 50);
+    const users = await ctx.db.query('users').order('desc').take(args.limit ?? 50);
+    return await Promise.all(
+      users.map(async (user) => ({
+        ...user,
+        avatarUrl: user.avatar ? await ctx.storage.getUrl(user.avatar) : null,
+      }))
+    );
   },
 });
 

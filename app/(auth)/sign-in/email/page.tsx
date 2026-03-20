@@ -53,7 +53,7 @@ export default function SignInEmailPage() {
       }
 
       await signIn('password', { email, password: data.password, flow: 'signIn' });
-      router.push('/lobby');
+      router.push('/');
     } catch (err) {
       toast.error('Invalid email/username or password');
     } finally {

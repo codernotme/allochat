@@ -9,8 +9,15 @@ export const getCurrentUser = query({
   returns: v.union(v.any(), v.null()),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) return null;
-    return await ctx.db.get(userId);
+    if (userId === null) return null;
+    const user = await ctx.db.get(userId);
+    if (user?.avatar) {
+      return {
+        ...user,
+        avatarUrl: await ctx.storage.getUrl(user.avatar as any),
+      };
+    }
+    return user;
   },
 });
 
@@ -26,10 +33,17 @@ export const getUserByUsername = query({
   args: { username: v.string() },
   returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const user = await ctx.db
       .query('users')
       .withIndex('byUsername', (q) => q.eq('username', args.username))
       .unique();
+    if (user?.avatar) {
+      return {
+        ...user,
+        avatarUrl: await ctx.storage.getUrl(user.avatar as any),
+      };
+    }
+    return user;
   },
 });
 
