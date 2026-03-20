@@ -68,6 +68,15 @@ export function UserMenu() {
           </Link>
         </DropdownMenuItem>
 
+        {(user?.role === 'admin' || user?.role === 'owner') && (
+          <DropdownMenuItem className="p-0">
+            <Link href="/admin" className="flex w-full items-center gap-2 px-3 py-2 text-primary">
+              <Icon icon="solar:shield-check-linear" className="size-4" />
+              Admin Dashboard
+            </Link>
+          </DropdownMenuItem>
+        )}
+
         <DropdownMenuSeparator />
 
         <DropdownMenuItem className="p-0">

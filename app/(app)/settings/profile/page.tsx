@@ -17,11 +17,14 @@ import { Icon } from '@iconify/react';
 export default function ProfileSettingsPage() {
   const user = useQuery(api.users.getCurrentUser);
   const updateProfile = useMutation(api.users.updateProfile);
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const siteSettings = useQuery(api.admin.getSiteSettings);
   
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [username, setUsername] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -40,6 +43,37 @@ export default function ProfileSettingsPage() {
       toast.error('Failed to update profile.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = siteSettings?.maxFileUploadSize || 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`File too large. Max size is ${Math.round(maxSize / (1024 * 1024))}MB.`);
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const result = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+
+      if (!result.ok) throw new Error('Upload failed');
+      
+      const { storageId } = await result.json();
+      await updateProfile({ avatar: storageId });
+      toast.success('Avatar updated!');
+    } catch (err) {
+      toast.error('Failed to upload avatar.');
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -84,14 +118,31 @@ export default function ProfileSettingsPage() {
                 {/* Avatar Section */}
                 <div className="flex items-center gap-4">
                   <Avatar className="size-20 border-2 border-primary/20">
-                    <AvatarImage src={user.avatar} />
+                    <AvatarImage src={user.avatar?.startsWith('http') ? user.avatar : `/api/storage/${user.avatar}`} />
                     <AvatarFallback>
                       <Icon icon="solar:user-circle-linear" className="size-8 text-muted-foreground" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col gap-2">
-                    <Button variant="outline" size="sm">Change Avatar</Button>
-                    <p className="text-muted-foreground text-xs italic">Upload a square image, max 2MB</p>
+                    <input
+                      type="file"
+                      id="avatar-upload"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      disabled={uploading}
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={uploading}
+                      onClick={() => document.getElementById('avatar-upload')?.click()}
+                    >
+                      {uploading ? 'Uploading…' : 'Change Avatar'}
+                    </Button>
+                    <p className="text-muted-foreground text-xs italic">
+                      Max {Math.round((siteSettings?.maxFileUploadSize || 0) / (1024 * 1024)) || 2}MB
+                    </p>
                   </div>
                 </div>
 

@@ -635,4 +635,13 @@ export default defineSchema({
     isActive: v.boolean(),
     createdAt: v.number(),
   }).index('byCreator', ['createdBy']),
+
+  siteSettings: defineTable({
+    maxFileUploadSize: v.number(), // in bytes
+    allowedFileTypes: v.array(v.string()),
+    maintenanceMode: v.boolean(),
+    registrationEnabled: v.boolean(),
+    updatedAt: v.number(),
+    updatedBy: v.id('users'),
+  }),
 });

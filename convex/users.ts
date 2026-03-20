@@ -89,6 +89,7 @@ export const updateProfile = mutation({
     theme: v.optional(v.union(v.literal('light'), v.literal('dark'), v.literal('system'))),
     language: v.optional(v.string()),
     interests: v.optional(v.array(v.string())),
+    avatar: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {

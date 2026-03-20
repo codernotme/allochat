@@ -9,6 +9,7 @@
  */
 
 import type * as actions from "../actions.js";
+import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as badges from "../badges.js";
 import type * as calls from "../calls.js";
@@ -18,6 +19,7 @@ import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
 import type * as rooms from "../rooms.js";
 import type * as seed from "../seed.js";
+import type * as storage from "../storage.js";
 import type * as users from "../users.js";
 
 import type {
@@ -28,6 +30,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   actions: typeof actions;
+  admin: typeof admin;
   auth: typeof auth;
   badges: typeof badges;
   calls: typeof calls;
@@ -37,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   rooms: typeof rooms;
   seed: typeof seed;
+  storage: typeof storage;
   users: typeof users;
 }>;
 
