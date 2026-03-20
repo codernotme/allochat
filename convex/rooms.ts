@@ -337,3 +337,74 @@ export const updateMemberRole = mutation({
     return null;
   },
 });
+
+export const kickMember = mutation({
+  args: {
+    roomId: v.id('rooms'),
+    memberUserId: v.id('users'),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error('Not authenticated');
+    if (args.memberUserId === userId) throw new Error('Cannot kick yourself');
+
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error('Room not found');
+
+    const actor = await ctx.db.get(userId);
+    const isPlatformAdmin = actor?.role === 'admin' || actor?.role === 'owner';
+    const isRoomOwner = room.ownerId === userId;
+    const isRoomAdmin = isRoomOwner || isPlatformAdmin;
+    if (!isRoomAdmin) throw new Error('Not authorized');
+
+    const membership = await ctx.db
+      .query('roomMembers')
+      .withIndex('byRoomAndUser', (q) => q.eq('roomId', args.roomId).eq('userId', args.memberUserId))
+      .unique();
+
+    if (!membership) throw new Error('Member not found');
+    if (membership.role === 'owner') throw new Error('Cannot kick room owner');
+
+    await ctx.db.delete(membership._id);
+    await ctx.db.patch(args.roomId, {
+      memberCount: Math.max(0, room.memberCount - 1),
+      updatedAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+export const muteMember = mutation({
+  args: {
+    roomId: v.id('rooms'),
+    memberUserId: v.id('users'),
+    durationMs: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error('Not authenticated');
+
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error('Room not found');
+
+    const actor = await ctx.db.get(userId);
+    const isPlatformAdmin = actor?.role === 'admin' || actor?.role === 'owner';
+    const isRoomOwner = room.ownerId === userId;
+    const isModerator = (room.ownerId === userId) || isPlatformAdmin;
+    if (!isModerator) throw new Error('Not authorized');
+
+    const membership = await ctx.db
+      .query('roomMembers')
+      .withIndex('byRoomAndUser', (q) => q.eq('roomId', args.roomId).eq('userId', args.memberUserId))
+      .unique();
+
+    if (!membership) throw new Error('Member not found');
+    if (membership.role === 'owner') throw new Error('Cannot mute room owner');
+
+    const mutedUntil = Date.now() + args.durationMs;
+    await ctx.db.patch(membership._id, { mutedUntil });
+    return null;
+  },
+});

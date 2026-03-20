@@ -36,8 +36,16 @@ export function MemberPanel({ roomId }: Props) {
 
   const sendFriendRequest = useMutation(api.users.sendFriendRequest);
   const updateMemberRole = useMutation(api.rooms.updateMemberRole);
+  const kickMember = useMutation(api.rooms.kickMember);
+  const muteMember = useMutation(api.rooms.muteMember);
 
   const [selectedMember, setSelectedMember] = useState<RoomMember | null>(null);
+  
+  // Get friendship status with selected member
+  const friendshipStatus = useQuery(
+     api.users.getFriendshipStatus,
+     selectedMember && currentUser ? { targetId: selectedMember.userId } : 'skip'
+  );
 
   const canManageRanks = useMemo(() => {
     if (!currentUser || !room) return false;
@@ -109,49 +117,53 @@ export function MemberPanel({ roomId }: Props) {
       </aside>
 
       <Dialog open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] sm:w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Member Profile</DialogTitle>
           </DialogHeader>
 
           {selectedMember && (
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="size-12 border border-border/60">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
+                <Avatar className="size-12 sm:size-14 border border-border/60 shrink-0">
                   <AvatarImage src={selectedMember.user?.image ?? undefined} />
                   <AvatarFallback className="bg-primary/10 font-bold">
                     {selectedMember.user?.name?.slice(0, 2).toUpperCase() || '??'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1 text-center sm:text-left">
                   <p className="truncate text-sm font-semibold">{selectedMember.user?.name || 'Anonymous User'}</p>
                   <p className="text-muted-foreground truncate text-xs">@{selectedMember.user?.username || 'unknown'}</p>
-                </div>
-                <div className="ml-auto">
-                  <Badge variant="secondary" className="capitalize">{selectedMember.role}</Badge>
+                  <div className="mt-1">
+                    <Badge variant="secondary" className="capitalize text-xs">{selectedMember.role}</Badge>
+                  </div>
                 </div>
               </div>
 
               <div className="text-muted-foreground grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-md border border-border/60 p-2">
                   <p className="font-medium text-foreground">Level</p>
-                  <p>{selectedMember.user?.level || 1}</p>
+                  <p className="text-base font-semibold">{selectedMember.user?.level || 1}</p>
                 </div>
                 <div className="rounded-md border border-border/60 p-2">
                   <p className="font-medium text-foreground">Status</p>
-                  <p>{selectedMember.user?.isOnline ? 'Online' : 'Offline'}</p>
+                  <p className="flex items-center gap-1"><span className={`inline-block size-2 rounded-full ${selectedMember.user?.isOnline ? 'bg-green-500' : 'bg-slate-400'}`} /> {selectedMember.user?.isOnline ? 'Online' : 'Offline'}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <Link href={`/messages/${selectedMember.userId}`} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
-                  Message
+                <Link href={`/messages/${selectedMember.userId}`} className={buttonVariants({ variant: 'secondary', size: 'sm' })} prefetch={false}>
+                  <Icon icon="solar:chat-2-linear" className="size-4 mr-1" />
+                  <span className="hidden sm:inline">Message</span>
+                  <span className="sm:hidden">Chat</span>
                 </Link>
-                <Link href={`/random/call/${selectedMember.userId}`} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
-                  Call
+                <Link href={`/random/call/${selectedMember.userId}`} className={buttonVariants({ variant: 'secondary', size: 'sm' })} prefetch={false}>
+                  <Icon icon="solar:call-linear" className="size-4 mr-1" />
+                  <span className="hidden sm:inline">Call</span>
+                  <span className="sm:hidden">Call</span>
                 </Link>
                 <Button
-                  variant="outline"
+                  variant={friendshipStatus === 'friends' ? 'default' : 'outline'}
                   size="sm"
                   onClick={async () => {
                     try {
@@ -162,17 +174,27 @@ export function MemberPanel({ roomId }: Props) {
                       toast.error(message);
                     }
                   }}
-                  disabled={selectedMember.userId === currentUser?._id}
+                  disabled={selectedMember.userId === currentUser?._id || friendshipStatus === 'friends' || friendshipStatus === 'pending-sent'}
+                  className="text-xs sm:text-sm"
                 >
-                  Add Friend
+                  <Icon icon={friendshipStatus === 'friends' ? 'solar:check-circle-linear' : 'solar:user-plus-linear'} className="size-4 mr-1" />
+                  {friendshipStatus === 'friends' && <span>Friends</span>}
+                  {friendshipStatus === 'pending-sent' && <span className="hidden sm:inline">Request Sent</span>}
+                  {friendshipStatus === 'pending-sent' && <span className="sm:hidden">Pending</span>}
+                  {friendshipStatus === 'pending-received' && <span className="hidden sm:inline">Accept Request</span>}
+                  {friendshipStatus === 'pending-received' && <span className="sm:hidden">Accept</span>}
+                  {friendshipStatus === 'none' && <span className="hidden sm:inline">Add Friend</span>}
+                  {friendshipStatus === 'none' && <span className="sm:hidden">Add</span>}
                 </Button>
-                <Link href={`/profile/${selectedMember.userId}`} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
-                  View Profile
+                <Link href={`/profile/${selectedMember.userId}`} className={buttonVariants({ variant: 'outline', size: 'sm' })} prefetch={false}>
+                  <Icon icon="solar:user-linear" className="size-4 mr-1" />
+                  <span className="hidden sm:inline">Profile</span>
+                  <span className="sm:hidden">View</span>
                 </Link>
               </div>
 
               {canManageRanks && selectedMember.userId !== currentUser?._id && selectedMember.role !== 'owner' && (
-                <div className="space-y-2">
+                <div className="space-y-2 border-t border-border/50 pt-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Change Rank</p>
                   <div className="grid grid-cols-3 gap-2">
                     <Button
@@ -182,6 +204,7 @@ export function MemberPanel({ roomId }: Props) {
                         await updateMemberRole({ roomId, memberUserId: selectedMember.userId, role: 'member' });
                         toast.success('Rank updated to member');
                       }}
+                      className="text-xs"
                     >
                       Member
                     </Button>
@@ -192,6 +215,7 @@ export function MemberPanel({ roomId }: Props) {
                         await updateMemberRole({ roomId, memberUserId: selectedMember.userId, role: 'moderator' });
                         toast.success('Rank updated to moderator');
                       }}
+                      className="text-xs"
                     >
                       Moderator
                     </Button>
@@ -202,8 +226,49 @@ export function MemberPanel({ roomId }: Props) {
                         await updateMemberRole({ roomId, memberUserId: selectedMember.userId, role: 'admin' });
                         toast.success('Rank updated to admin');
                       }}
+                      className="text-xs"
                     >
                       Admin
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          await muteMember({ roomId, memberUserId: selectedMember.userId, durationMs: 3600000 }); // 1 hour
+                          toast.success('Member muted for 1 hour');
+                        } catch (err: unknown) {
+                          const message = err instanceof Error ? err.message : 'Could not mute member';
+                          toast.error(message);
+                        }
+                      }}
+                      className="text-xs"
+                    >
+                      <Icon icon="solar:volume-cross-linear" className="size-4 mr-1" />
+                      Mute 1h
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={async () => {
+                        if (window.confirm(`Kick ${selectedMember.user?.name} from this room?`)) {
+                          try {
+                            await kickMember({ roomId, memberUserId: selectedMember.userId });
+                            toast.success('Member removed from room');
+                            setSelectedMember(null);
+                          } catch (err: unknown) {
+                            const message = err instanceof Error ? err.message : 'Could not kick member';
+                            toast.error(message);
+                          }
+                        }
+                      }}
+                      className="text-xs"
+                    >
+                      <Icon icon="solar:logout-2-linear" className="size-4 mr-1" />
+                      Kick
                     </Button>
                   </div>
                 </div>

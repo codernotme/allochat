@@ -10,8 +10,8 @@ import { Icon } from '@iconify/react';
 import { RichTextEditor } from './RichTextEditor';
 import { VoiceRecorder } from './VoiceRecorder';
 import { CanvasDraw } from './CanvasDraw';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { GifSearchDialog } from './GifSearchDialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 type Props = { roomId: Id<'rooms'> };
 
@@ -22,10 +22,11 @@ export function MessageInput({ roomId }: Props) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [showGifDialog, setShowGifDialog] = useState(false);
-  const [gifUrl, setGifUrl] = useState('');
+  const [mediaMenuOpen, setMediaMenuOpen] = useState(false);
 
   const sendMessage = useMutation(api.messages.sendMessage);
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const getStorageUrl = useMutation(api.storage.getStorageUrl);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +43,7 @@ export function MessageInput({ roomId }: Props) {
       await sendMessage({ roomId, content: text, type: isMediaUrl ? 'media' : 'text' });
       setContent('');
       textareaRef.current?.focus();
+      toast.success('Message sent!');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '';
       if (message.includes('FLOOD_LIMIT_REACHED')) {
@@ -59,7 +61,7 @@ export function MessageInput({ roomId }: Props) {
   const handleFileUpload = useCallback(
     async (file: File) => {
       if (!file.type.startsWith('image/')) {
-        toast.error('Only image uploads are supported for now (including GIF/webp stickers).');
+        toast.error('Only image uploads are supported (PNG, JPEG, GIF, WebP).');
         return;
       }
       if (file.size > 12 * 1024 * 1024) {
@@ -81,17 +83,29 @@ export function MessageInput({ roomId }: Props) {
         }
 
         const { storageId } = (await uploadResult.json()) as { storageId: string };
-        const fileUrl = `/api/storage/${storageId}`;
-
-        await sendMessage({ roomId, content: fileUrl, type: 'media' });
-        toast.success('Image sent');
-      } catch {
-        toast.error('Failed to upload image');
+        
+        // Get the resolved URL from backend
+        try {
+          const fileUrl = await getStorageUrl({ storageId });
+          if (fileUrl) {
+            await sendMessage({ roomId, content: fileUrl, type: 'media' });
+            toast.success('Image sent!');
+          }
+        } catch {
+          // Fallback to direct storage endpoint if resolution fails
+          const fileUrl = `/api/storage/${storageId}`;
+          await sendMessage({ roomId, content: fileUrl, type: 'media' });
+          toast.success('Image sent!');
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to upload image';
+        toast.error(message);
       } finally {
         setIsUploadingFile(false);
+        setMediaMenuOpen(false);
       }
     },
-    [generateUploadUrl, roomId, sendMessage]
+    [generateUploadUrl, getStorageUrl, roomId, sendMessage]
   );
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -118,7 +132,7 @@ export function MessageInput({ roomId }: Props) {
   }
 
   return (
-    <div className="border-border bg-background relative border-t p-3">
+    <div className="border-border bg-background relative border-t p-2 sm:p-3">
       <input
         ref={fileInputRef}
         type="file"
@@ -133,57 +147,71 @@ export function MessageInput({ roomId }: Props) {
         }}
       />
 
-      <Dialog open={showGifDialog} onOpenChange={setShowGifDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Send GIF or Sticker URL</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-3">
-            <Input
-              value={gifUrl}
-              onChange={(e) => setGifUrl(e.target.value)}
-              placeholder="https://media.giphy.com/..."
-            />
-            <Button
-              onClick={async () => {
-                const url = gifUrl.trim();
-                if (!/^https?:\/\/.+/i.test(url)) {
-                  toast.error('Enter a valid URL');
-                  return;
-                }
-                try {
-                  await sendMessage({ roomId, content: url, type: 'media' });
-                  setGifUrl('');
-                  setShowGifDialog(false);
-                } catch {
-                  toast.error('Failed to send GIF');
-                }
-              }}
-              disabled={!gifUrl.trim()}
-            >
-              Send GIF
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <GifSearchDialog open={showGifDialog} onOpenChange={setShowGifDialog} onSelectGif={async (gifUrl) => {
+        try {
+          await sendMessage({ roomId, content: gifUrl, type: 'media' });
+          toast.success('GIF sent!');
+        } catch {
+          toast.error('Failed to send GIF');
+        }
+      }} />
 
       <div className="flex w-full items-end gap-2">
-        <div className="flex shrink-0 flex-col gap-1 pb-1.5">
-          <button
-            type="button"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground flex size-8 items-center justify-center rounded-lg transition-colors"
-            aria-label="Attach image"
-            title="Upload image/sticker"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploadingFile || sending}
-          >
-            {isUploadingFile ? (
-              <Icon icon="solar:refresh-linear" className="size-5 animate-spin" />
-            ) : (
-              <Icon icon="solar:paperclip-linear" className="size-5" />
-            )}
-          </button>
-        </div>
+        {/* Media Menu Button */}
+        <Popover open={mediaMenuOpen} onOpenChange={setMediaMenuOpen}>
+          <PopoverTrigger className="text-muted-foreground hover:bg-accent hover:text-foreground shrink-0 size-8 sm:size-9 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" title="Add media (+ icon)" disabled={sending || isUploadingFile || isRecording || isDrawing}>
+            <Icon icon="solar:plus-circle-linear" className="size-5 sm:size-6" />
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2" side="top" align="start">
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="flex flex-col items-center gap-1 h-auto py-2"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingFile}
+              >
+                <Icon icon="solar:gallery-linear" className="size-5" />
+                <span className="text-xs">Upload Image</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="flex flex-col items-center gap-1 h-auto py-2"
+                onClick={() => {
+                  setShowGifDialog(true);
+                  setMediaMenuOpen(false);
+                }}
+              >
+                <Icon icon="solar:gif-linear" className="size-5" />
+                <span className="text-xs">GIF/Sticker</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="flex flex-col items-center gap-1 h-auto py-2"
+                onClick={() => {
+                  setIsRecording(true);
+                  setMediaMenuOpen(false);
+                }}
+              >
+                <Icon icon="solar:microphone-2-linear" className="size-5" />
+                <span className="text-xs">Voice</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="flex flex-col items-center gap-1 h-auto py-2"
+                onClick={() => {
+                  setIsDrawing(true);
+                  setMediaMenuOpen(false);
+                }}
+              >
+                <Icon icon="solar:pen-new-square-linear" className="size-5" />
+                <span className="text-xs">Draw</span>
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <div className="min-w-0 flex-1">
           <RichTextEditor
@@ -191,59 +219,21 @@ export function MessageInput({ roomId }: Props) {
             onChange={setContent}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            disabled={sending || isUploadingFile}
-            className="w-full shadow-sm"
+            disabled={sending || isUploadingFile || isRecording || isDrawing}
+            className="w-full text-sm"
           />
         </div>
 
-        <div className="flex shrink-0 gap-1 pb-1.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground size-8 rounded-lg"
-            onClick={() => setShowGifDialog(true)}
-            disabled={sending || isUploadingFile}
-            aria-label="Send GIF"
-            title="GIF"
-          >
-            <Icon icon="solar:gif-linear" className="size-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground size-8 rounded-lg"
-            onClick={() => setIsRecording(true)}
-            disabled={sending || isUploadingFile}
-            aria-label="Record voice message"
-            title="Voice message"
-          >
-            <Icon icon="solar:microphone-2-linear" className="size-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground size-8 rounded-lg"
-            onClick={() => setIsDrawing(true)}
-            disabled={sending || isUploadingFile}
-            aria-label="Draw sketch"
-            title="Sketch"
-          >
-            <Icon icon="solar:pen-new-square-linear" className="size-4" />
-          </Button>
-
-          <Button
-            size="icon"
-            className="ml-1 size-8 rounded-lg"
-            onClick={() => void handleSend()}
-            disabled={!content.trim() || sending || isUploadingFile}
-            aria-label="Send message"
-            title="Send (Ctrl+Enter)"
-          >
-            {sending ? '...' : <Icon icon="solar:arrow-right-linear" className="size-4" />}
-          </Button>
-        </div>
+        <Button
+          size="icon"
+          className="shrink-0 size-8 sm:size-9 rounded-lg"
+          onClick={() => void handleSend()}
+          disabled={!content.trim() || sending || isUploadingFile || isRecording || isDrawing}
+          aria-label="Send message"
+          title="Send (Ctrl+Enter)"
+        >
+          {sending ? <Icon icon="solar:refresh-linear" className="size-4 sm:size-5 animate-spin" /> : <Icon icon="solar:arrow-right-linear" className="size-4 sm:size-5" />}
+        </Button>
       </div>
       <p className="text-muted-foreground mt-1 text-center text-xs">Ctrl+Enter to send</p>
     </div>

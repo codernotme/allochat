@@ -41,24 +41,24 @@ export function RichTextEditor({ value, onChange, onKeyDown, placeholder, classN
   }
 
   return (
-    <div className={cn("flex flex-col border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all bg-transparent", className)}>
-      <div className="flex items-center gap-1 p-1 border-b border-border/50 bg-muted/10 rounded-t-xl">
-        <Button type="button" variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-foreground rounded" onClick={() => insertFormatting('**')} disabled={disabled} title="Bold">
-          <Icon icon="solar:text-bold-linear" className="size-3.5" />
+    <div className={cn("flex flex-col border border-border rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all bg-transparent text-sm", className)}>
+      <div className="flex items-center gap-1 p-1.5 border-b border-border/50 bg-muted/10 rounded-t-xl overflow-x-auto sm:overflow-x-visible scrollbar-hide">
+        <Button type="button" variant="ghost" size="icon" className="size-6 sm:size-7 text-muted-foreground hover:text-foreground rounded shrink-0" onClick={() => insertFormatting('**')} disabled={disabled} title="Bold">
+          <Icon icon="solar:text-bold-linear" className="size-3.5 sm:size-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-foreground rounded" onClick={() => insertFormatting('*')} disabled={disabled} title="Italic">
-          <Icon icon="mdi:format-italic" className="size-3.5" />
+        <Button type="button" variant="ghost" size="icon" className="size-6 sm:size-7 text-muted-foreground hover:text-foreground rounded shrink-0" onClick={() => insertFormatting('*')} disabled={disabled} title="Italic">
+          <Icon icon="mdi:format-italic" className="size-3.5 sm:size-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-foreground rounded" onClick={() => insertFormatting('~~')} disabled={disabled} title="Strikethrough">
-          <Icon icon="solar:text-strikethrough-linear" className="size-3.5" />
+        <Button type="button" variant="ghost" size="icon" className="size-6 sm:size-7 text-muted-foreground hover:text-foreground rounded shrink-0" onClick={() => insertFormatting('~~')} disabled={disabled} title="Strikethrough">
+          <Icon icon="mdi:strikethrough-variant" className="size-3.5 sm:size-4" />
         </Button>
-        <div className="w-px h-4 bg-border mx-1" />
-        <Button type="button" variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-foreground rounded" onClick={() => insertFormatting('`')} disabled={disabled} title="Inline Code">
-          <Icon icon="solar:code-square-linear" className="size-3.5" />
+        <div className="w-px h-4 bg-border mx-0.5 shrink-0" />
+        <Button type="button" variant="ghost" size="icon" className="size-6 sm:size-7 text-muted-foreground hover:text-foreground rounded shrink-0" onClick={() => insertFormatting('`')} disabled={disabled} title="Inline Code">
+          <Icon icon="solar:code-square-linear" className="size-3.5 sm:size-4" />
         </Button>
       </div>
       
-      <div className="flex items-end px-2 py-1 gap-2">
+      <div className="flex items-end px-2 py-1.5 gap-2">
         <textarea
           ref={textareaRef}
           value={value}

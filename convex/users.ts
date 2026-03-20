@@ -98,6 +98,55 @@ export const getFriendRequests = query({
   },
 });
 
+export const getFriendshipStatus = query({
+  args: { targetId: v.id('users') },
+  returns: v.union(
+    v.literal('none'),
+    v.literal('friends'),
+    v.literal('pending-sent'),
+    v.literal('pending-received')
+  ),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return 'none';
+
+    // Check if user sent a request to target
+    const sentRequest = await ctx.db
+      .query('friendships')
+      .withIndex('byRequester', (q) =>
+        q.eq('requesterId', userId).eq('status', 'accepted')
+      )
+      .filter((q) => q.eq(q.field('targetId'), args.targetId))
+      .first();
+
+    if (sentRequest && sentRequest.status === 'accepted') return 'friends';
+
+    // Check if user sent a pending request
+    const pendingSent = await ctx.db
+      .query('friendships')
+      .withIndex('byRequester', (q) =>
+        q.eq('requesterId', userId).eq('status', 'pending')
+      )
+      .filter((q) => q.eq(q.field('targetId'), args.targetId))
+      .first();
+
+    if (pendingSent) return 'pending-sent';
+
+    // Check if target sent a pending request to user
+    const pendingReceived = await ctx.db
+      .query('friendships')
+      .withIndex('byTarget', (q) =>
+        q.eq('targetId', userId).eq('status', 'pending')
+      )
+      .filter((q) => q.eq(q.field('requesterId'), args.targetId))
+      .first();
+
+    if (pendingReceived) return 'pending-received';
+
+    return 'none';
+  },
+});
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 export const updateProfile = mutation({

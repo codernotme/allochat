@@ -38,3 +38,20 @@ export const deleteFile = mutation({
     await ctx.storage.delete(args.storageId);
   },
 });
+
+export const getStorageUrl = mutation({
+  args: { storageId: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error('Not authenticated');
+
+    try {
+      // Try to resolve as storage ID
+      const url = await ctx.storage.getUrl(args.storageId as any);
+      return url;
+    } catch {
+      // If it fails, return as-is (might be a direct URL)
+      return args.storageId;
+    }
+  },
+});
