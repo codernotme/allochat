@@ -27,6 +27,12 @@ export const getSiteSettings = query({
         allowedFileTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
         maintenanceMode: false,
         registrationEnabled: true,
+        addons: {
+          tenorGifs: true,
+          urlPreviews: true,
+          voiceMessages: true,
+          fileSharing: true,
+        },
       };
     }
     return settings;
@@ -39,6 +45,14 @@ export const updateSiteSettings = mutation({
     allowedFileTypes: v.optional(v.array(v.string())),
     maintenanceMode: v.optional(v.boolean()),
     registrationEnabled: v.optional(v.boolean()),
+    addons: v.optional(
+      v.object({
+        tenorGifs: v.boolean(),
+        urlPreviews: v.boolean(),
+        voiceMessages: v.boolean(),
+        fileSharing: v.boolean(),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const admin = await checkAdmin(ctx);
@@ -56,6 +70,12 @@ export const updateSiteSettings = mutation({
         allowedFileTypes: args.allowedFileTypes ?? ['image/jpeg', 'image/png', 'image/gif'],
         maintenanceMode: args.maintenanceMode ?? false,
         registrationEnabled: args.registrationEnabled ?? true,
+        addons: args.addons ?? {
+          tenorGifs: true,
+          urlPreviews: true,
+          voiceMessages: true,
+          fileSharing: true,
+        },
         updatedAt: Date.now(),
         updatedBy: admin._id,
       });

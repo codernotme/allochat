@@ -159,13 +159,22 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
           patch.username = withEntropy(defaults.username);
         }
 
+        if (!current.emailVerified && current.email) {
+          patch.emailVerified = true;
+        }
+
         await ctx.db.patch(args.existingUserId, patch);
         return args.existingUserId;
       }
 
+      const existingUsers = await ctx.db.query('users').take(1);
+      const isFirstUser = existingUsers.length === 0;
+
       const userId = await ctx.db.insert('users', {
         ...defaults,
         username: withEntropy(defaults.username),
+        role: isFirstUser ? 'owner' : 'user',
+        emailVerified: true,
       });
       return userId;
     },

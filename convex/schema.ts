@@ -77,7 +77,8 @@ export default defineSchema({
       v.literal('free'),
       v.literal('premium'),
       v.literal('pro'),
-      v.literal('elite')
+      v.literal('elite'),
+      v.literal('vip')
     )),
 
     // Gamification (denormalized)
@@ -641,6 +642,14 @@ export default defineSchema({
     allowedFileTypes: v.array(v.string()),
     maintenanceMode: v.boolean(),
     registrationEnabled: v.boolean(),
+    addons: v.optional(
+      v.object({
+        tenorGifs: v.boolean(),
+        urlPreviews: v.boolean(),
+        voiceMessages: v.boolean(),
+        fileSharing: v.boolean(),
+      })
+    ),
     updatedAt: v.number(),
     updatedBy: v.id('users'),
   }),
