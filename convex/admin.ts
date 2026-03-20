@@ -4,14 +4,40 @@ import { getAuthUserId } from '@convex-dev/auth/server';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function checkAdmin(ctx: any) {
+const ROLE_HIERARCHY: Record<string, number> = {
+  owner: 100,
+  admin: 80,
+  moderator: 60,
+  staff: 40,
+  user: 0,
+  guest: -1,
+};
+
+async function checkStaff(ctx: any, minRole: string = 'staff') {
   const userId = await getAuthUserId(ctx);
   if (!userId) throw new Error('Not authenticated');
   const user = await ctx.db.get(userId);
-  if (user?.role !== 'admin' && user?.role !== 'owner') {
-    throw new Error('Not authorized: Admin only');
+  
+  const userLevel = ROLE_HIERARCHY[user?.role || 'user'] ?? 0;
+  const minLevel = ROLE_HIERARCHY[minRole] ?? 40;
+
+  if (userLevel < minLevel) {
+    throw new Error(`Not authorized: Requires ${minRole} or higher`);
   }
   return user;
+}
+
+async function checkHierarchy(actor: any, targetId: any, ctx: any) {
+  const target = await ctx.db.get(targetId);
+  if (!target) throw new Error('Target not found');
+  
+  const actorLevel = ROLE_HIERARCHY[actor.role || 'user'] ?? 0;
+  const targetLevel = ROLE_HIERARCHY[target.role || 'user'] ?? 0;
+  
+  if (actorLevel <= targetLevel && actor._id !== target._id) {
+    throw new Error('Not authorized to modify a user with equal or higher rank');
+  }
+  return target;
 }
 
 // ─── Site Settings ────────────────────────────────────────────────────────────
@@ -55,7 +81,7 @@ export const updateSiteSettings = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const admin = await checkAdmin(ctx);
+    const admin = await checkStaff(ctx, 'admin');
     const settings = await ctx.db.query('siteSettings').first();
 
     if (settings) {
@@ -91,7 +117,7 @@ export const getAllUsers = query({
     cursor: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'staff');
     return await ctx.db.query('users').order('desc').take(args.limit ?? 50);
   },
 });
@@ -99,7 +125,8 @@ export const getAllUsers = query({
 export const updateUserRole = mutation({
   args: { userId: v.id('users'), role: v.string() },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    const admin = await checkStaff(ctx, 'admin');
+    await checkHierarchy(admin, args.userId, ctx);
     await ctx.db.patch(args.userId, { 
       role: args.role as any,
       updatedAt: Date.now() 
@@ -110,7 +137,8 @@ export const updateUserRole = mutation({
 export const setUserBanStatus = mutation({
   args: { userId: v.id('users'), isBanned: v.boolean(), reason: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const admin = await checkAdmin(ctx);
+    const admin = await checkStaff(ctx, 'moderator');
+    await checkHierarchy(admin, args.userId, ctx);
     await ctx.db.patch(args.userId, { 
         isBanned: args.isBanned,
         updatedAt: Date.now() 
@@ -134,7 +162,7 @@ export const setUserBanStatus = mutation({
 export const getAllRooms = query({
   args: {},
   handler: async (ctx) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'staff');
     return await ctx.db.query('rooms').order('desc').collect();
   },
 });
@@ -142,7 +170,7 @@ export const getAllRooms = query({
 export const setRoomVerification = mutation({
   args: { roomId: v.id('rooms'), isVerified: v.boolean() },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'moderator');
     await ctx.db.patch(args.roomId, { isVerified: args.isVerified });
   },
 });
@@ -150,7 +178,7 @@ export const setRoomVerification = mutation({
 export const deleteRoom = mutation({
   args: { roomId: v.id('rooms') },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'admin');
     // In a real app, we'd also delete members and messages
     await ctx.db.delete(args.roomId);
   },
@@ -161,7 +189,7 @@ export const deleteRoom = mutation({
 export const getSiteStats = query({
   args: {},
   handler: async (ctx) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'staff');
     const users = await ctx.db.query('users').collect();
     const rooms = await ctx.db.query('rooms').collect();
     const messages = await ctx.db.query('messages').collect();
@@ -178,7 +206,8 @@ export const getSiteStats = query({
 export const muteUser = mutation({
   args: { userId: v.id('users'), durationMinutes: v.number(), reason: v.string() },
   handler: async (ctx, args) => {
-    const admin = await checkAdmin(ctx);
+    const admin = await checkStaff(ctx, 'staff');
+    await checkHierarchy(admin, args.userId, ctx);
     const muteExpiry = Date.now() + args.durationMinutes * 60 * 1000;
     
     await ctx.db.patch(args.userId, { 
@@ -213,7 +242,7 @@ export const muteUser = mutation({
 export const getReports = query({
   args: { status: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'staff');
     if (args.status) {
       return await ctx.db
         .query('reports')
@@ -228,7 +257,7 @@ export const getReports = query({
 export const resolveReport = mutation({
   args: { reportId: v.id('reports'), status: v.union(v.literal('resolved'), v.literal('dismissed')) },
   handler: async (ctx, args) => {
-    const admin = await checkAdmin(ctx);
+    const admin = await checkStaff(ctx, 'staff');
     await ctx.db.patch(args.reportId, { 
       status: args.status,
       resolvedAt: Date.now(),
@@ -250,7 +279,7 @@ export const resolveReport = mutation({
 export const getFilters = query({
   args: {},
   handler: async (ctx) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'staff');
     return await ctx.db.query('contentFilters').order('desc').collect();
   },
 });
@@ -258,7 +287,7 @@ export const getFilters = query({
 export const addFilter = mutation({
   args: { pattern: v.string(), type: v.string(), action: v.string(), severity: v.string() },
   handler: async (ctx, args) => {
-    const admin = await checkAdmin(ctx);
+    const admin = await checkStaff(ctx, 'moderator');
     await ctx.db.insert('contentFilters', {
       ...args,
       createdBy: admin._id,
@@ -270,7 +299,7 @@ export const addFilter = mutation({
 export const deleteFilter = mutation({
   args: { filterId: v.id('contentFilters') },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'moderator');
     await ctx.db.delete(args.filterId);
   },
 });
@@ -294,7 +323,7 @@ export const createGift = mutation({
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'admin');
     await ctx.db.insert('gifts', {
       ...args,
       animationType: 'default',
@@ -306,7 +335,7 @@ export const createGift = mutation({
 export const updateGift = mutation({
   args: { id: v.id('gifts'), isActive: v.boolean(), coinPrice: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'admin');
     const { id, ...rest } = args;
     await ctx.db.patch(id, rest);
   },
@@ -317,7 +346,7 @@ export const updateGift = mutation({
 export const adjustWallet = mutation({
   args: { userId: v.id('users'), amount: v.number(), description: v.string() },
   handler: async (ctx, args) => {
-    const admin = await checkAdmin(ctx);
+    const admin = await checkStaff(ctx, 'admin');
     const wallet = await ctx.db.query('wallets').withIndex('byUser', q => q.eq('userId', args.userId)).unique();
     
     if (wallet) {
@@ -380,7 +409,7 @@ export const createBadge = mutation({
     xpReward: v.number(),
   },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'admin');
     await ctx.db.insert('badges', {
       ...args,
       isSecret: false,
@@ -394,7 +423,32 @@ export const createBadge = mutation({
 export const getAuditLogs = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    await checkAdmin(ctx);
+    await checkStaff(ctx, 'admin');
     return await ctx.db.query('auditLogs').order('desc').take(args.limit ?? 100);
+  },
+});
+
+export const setSubscriptionTier = mutation({
+  args: { 
+    userId: v.id('users'), 
+    tier: v.union(v.literal('free'), v.literal('premium'), v.literal('pro'), v.literal('elite'), v.literal('vip')) 
+  },
+  handler: async (ctx, args) => {
+    const admin = await checkStaff(ctx, 'admin');
+    await checkHierarchy(admin, args.userId, ctx);
+    
+    await ctx.db.patch(args.userId, { 
+      subscriptionTier: args.tier,
+      updatedAt: Date.now()
+    });
+
+    await ctx.db.insert('auditLogs', {
+      actorId: admin._id,
+      action: 'assign_vip',
+      targetType: 'user',
+      targetId: args.userId,
+      details: { tier: args.tier },
+      createdAt: Date.now(),
+    });
   },
 });

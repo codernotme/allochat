@@ -20,6 +20,7 @@ export default function AdminUsersPage() {
   const updateUserRole = useMutation(api.admin.updateUserRole);
   const muteUser = useMutation(api.admin.muteUser);
   const adjustWallet = useMutation(api.admin.adjustWallet);
+  const setSubscriptionTier = useMutation(api.admin.setSubscriptionTier);
 
   const filteredUsers = users?.filter(u => 
     u.username.toLowerCase().includes(search.toLowerCase()) || 
@@ -40,6 +41,15 @@ export default function AdminUsersPage() {
     try {
       await updateUserRole({ userId, role: newRole });
       toast.success('Role updated');
+    } catch {
+      toast.error('Action failed');
+    }
+  }
+
+  async function toggleVIP(userId: any, tier: 'free' | 'premium' | 'pro' | 'elite' | 'vip') {
+    try {
+      await setSubscriptionTier({ userId, tier });
+      toast.success(tier === 'vip' ? 'VIP granted' : 'VIP revoked');
     } catch {
       toast.error('Action failed');
     }
@@ -114,6 +124,9 @@ export default function AdminUsersPage() {
                       {user.isMuted && (
                         <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-500 w-fit">Muted</Badge>
                       )}
+                      {user.subscriptionTier === 'vip' && (
+                        <Badge variant="outline" className="text-[10px] border-yellow-500 text-yellow-500 bg-yellow-500/10 w-fit">VIP</Badge>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 tabular-nums">
@@ -134,6 +147,16 @@ export default function AdminUsersPage() {
                         isMuted={user.isMuted}
                         onMute={(mins: number, reason: string) => muteUser({ userId: user._id, durationMinutes: mins, reason })} 
                       />
+
+                      <Button 
+                        variant="ghost" 
+                        size={null} 
+                        className={`h-8 w-8 ${user.subscriptionTier === 'vip' ? 'text-yellow-500' : 'text-muted-foreground'}`}
+                        title={user.subscriptionTier === 'vip' ? 'Revoke VIP' : 'Grant VIP'}
+                        onClick={() => toggleVIP(user._id, user.subscriptionTier === 'vip' ? 'free' : 'vip')}
+                      >
+                        <Icon icon="solar:star-bold" className="size-4" />
+                      </Button>
 
                       <Button 
                         variant="ghost" 
