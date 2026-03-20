@@ -160,6 +160,21 @@ export const acceptFriendRequest = mutation({
   },
 });
 
+export const declineFriendRequest = mutation({
+  args: { requestId: v.id('friendships') },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error('Not authenticated');
+
+    const req = await ctx.db.get(args.requestId);
+    if (!req || req.targetId !== userId) throw new Error('Not authorized');
+
+    await ctx.db.delete(args.requestId);
+    return null;
+  },
+});
+
 export const blockUser = mutation({
   args: { targetId: v.id('users') },
   returns: v.null(),

@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button';
 import { NotificationBell } from './notification-bell';
+import { UserMenu } from './user-menu';
 import { cn } from '@/lib/utils';
 import { Icon } from '@iconify/react';
 
@@ -41,16 +42,8 @@ export function TopBar() {
           />
         </Button>
 
-        {/* User avatar shortcut */}
-        <Link 
-          href="/settings/profile" 
-          className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), "rounded-full")}
-          aria-label="Profile"
-        >
-          <div className="bg-primary/20 flex size-7 items-center justify-center rounded-full text-sm">
-            <Icon icon="solar:user-circle-linear" className="size-4" />
-          </div>
-        </Link>
+        {/* User menu dropdown */}
+        <UserMenu />
       </div>
     </header>
   );

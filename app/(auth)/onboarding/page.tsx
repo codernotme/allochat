@@ -45,13 +45,20 @@ export default function OnboardingPage() {
     );
   }
 
+  const updateProfile = useMutation(api.users.updateProfile);
+
   async function handleFinish() {
     setLoading(true);
     try {
-      // Profile mutation will be available after schema deploy
+      await updateProfile({
+        displayName: displayName.trim(),
+        username: username.trim(),
+        bio: bio.trim(),
+        interests: selectedInterests,
+      });
       toast.success('Welcome to AlloChat!');
       router.push('/lobby');
-    } catch {
+    } catch (err) {
       toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
