@@ -14,11 +14,22 @@ export const listMessages = query({
   },
   returns: v.any(),
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+
     const page = await ctx.db
       .query('messages')
       .withIndex('byRoom', (q) => q.eq('roomId', args.roomId))
       .order('desc')
-      .filter((q) => q.eq(q.field('isDeleted'), false))
+      .filter((q) => 
+        q.and(
+          q.eq(q.field('isDeleted'), false),
+          q.or(
+             q.eq(q.field('whisperTo'), undefined),
+             userId ? q.eq(q.field('whisperTo'), userId) : false as any,
+             userId ? q.eq(q.field('senderId'), userId) : false as any
+          )
+        )
+      )
       .paginate(args.paginationOpts);
 
     const resultsWithUsers = await Promise.all(
@@ -104,10 +115,11 @@ export const sendMessage = mutation({
     content: v.string(),
     type: v.optional(
       v.union(
-        v.literal('text'), v.literal('media'), v.literal('voice'), v.literal('poll')
+        v.literal('text'), v.literal('media'), v.literal('voice'), v.literal('sketch'), v.literal('poll')
       )
     ),
     replyTo: v.optional(v.id('messages')),
+    whisperTo: v.optional(v.id('users')),
   },
   returns: v.id('messages'),
   handler: async (ctx, args) => {
@@ -139,7 +151,25 @@ export const sendMessage = mutation({
     if (recentFromUser.length >= 6) throw new Error('FLOOD_LIMIT_REACHED');
 
     const now = Date.now();
-    const filteredContent = await applyContentFilters(ctx, args.content);
+    let actualContent = args.content.trim();
+    let whisperToId = args.whisperTo;
+
+    const whisperMatch = actualContent.match(/^\/w\s+@([a-zA-Z0-9_]+)\s+(.+)/i);
+    if (whisperMatch) {
+      const targetUsername = whisperMatch[1];
+      const targetUser = await ctx.db
+        .query('users')
+        .withIndex('byUsername', (q) => q.eq('username', targetUsername))
+        .unique();
+      
+      if (!targetUser) {
+        throw new Error(`User @${targetUsername} not found for whisper`);
+      }
+      whisperToId = targetUser._id;
+      actualContent = whisperMatch[2];
+    }
+
+    const filteredContent = await applyContentFilters(ctx, actualContent);
 
     const messageId = await ctx.db.insert('messages', {
       roomId: args.roomId,
@@ -147,22 +177,54 @@ export const sendMessage = mutation({
       content: filteredContent,
       type: args.type ?? 'text',
       replyTo: args.replyTo,
+      whisperTo: whisperToId,
       isPinned: false,
       isDeleted: false,
       reactions: [],
       createdAt: now,
     });
 
-    // Increment room message count
+    // 4. Update room stats
     const room = await ctx.db.get(args.roomId);
     if (!room) {
       throw new Error('Room not found');
     }
-    // 4. Update room stats
+    
     await ctx.db.patch(args.roomId, {
       totalMessages: (room.totalMessages || 0) + 1,
       updatedAt: now,
     });
+
+    // 4.5 Check Trivia
+    if ((args.type === 'text' || args.type === undefined) && room.activeTrivia) {
+      const isCorrect = room.activeTrivia.answers.some((a: string) =>
+        actualContent.toLowerCase().includes(a.toLowerCase())
+      );
+      if (isCorrect) {
+        await ctx.runMutation((api as any).trivia.awardTriviaWin, {
+          roomId: args.roomId,
+          winnerId: userId,
+          answer: actualContent,
+        });
+      }
+    }
+
+    // 4.6 Check RPS Minigames
+    if (args.type === 'text' || args.type === undefined) {
+      const rpsMatch = actualContent.match(/^\/rps\s+@([a-zA-Z0-9_]+)\s+(rock|paper|scissors)/i);
+      if (rpsMatch) {
+        try {
+          await ctx.runMutation((api as any).minigames.playRPS, {
+            roomId: args.roomId,
+            senderId: userId,
+            targetUsername: rpsMatch[1],
+            move: rpsMatch[2],
+          });
+        } catch (e) {
+          // Ignore invalid targets silently or allow the user message to just be text
+        }
+      }
+    }
 
     // 5. Award XP
     await ctx.runMutation((api as any).gamification.addXP, {

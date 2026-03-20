@@ -8,6 +8,7 @@ import { LevelBadge } from '@/components/gamification/LevelBadge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { EmoticonText } from './EmoticonText';
+import { Icon } from '@iconify/react';
 
 type Props = { message: any; grouped?: boolean };
 
@@ -51,7 +52,8 @@ export function MessageBubble({ message, grouped }: Props) {
     <div
       className={cn(
         "group relative flex gap-3 px-4 py-1 transition-all hover:bg-accent/40",
-        !grouped && "mt-3"
+        !grouped && "mt-3",
+        message.whisperTo && "bg-purple-500/5 hover:bg-purple-500/10 border-l-2 border-purple-500"
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -66,9 +68,9 @@ export function MessageBubble({ message, grouped }: Props) {
         </Avatar>
       ) : (
         <div className="w-9 shrink-0 flex justify-end pr-2">
-           <span className="text-[9px] text-muted-foreground/0 group-hover:text-muted-foreground/60 transition-opacity font-medium mt-1">
-             {time.split(':')[1].split(' ')[0]}
-           </span>
+          <span className="text-[9px] text-muted-foreground/0 group-hover:text-muted-foreground/60 transition-opacity font-medium mt-1">
+            {time.split(':')[1].split(' ')[0]}
+          </span>
         </div>
       )}
 
@@ -81,6 +83,11 @@ export function MessageBubble({ message, grouped }: Props) {
             </span>
             <LevelBadge level={message.sender?.level || 1} />
             <span className="text-muted-foreground text-[10px] font-medium opacity-70 ml-1">{time}</span>
+            {message.whisperTo && (
+              <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded flex items-center gap-1 ml-1">
+                <Icon icon="solar:lock-keyhole-minimalistic-bold" className="size-3" /> Whisper
+              </span>
+            )}
             {message.editedAt && (
               <span className="text-muted-foreground text-[9px] font-bold uppercase tracking-widest opacity-40 ml-1">(edited)</span>
             )}
@@ -95,9 +102,19 @@ export function MessageBubble({ message, grouped }: Props) {
         )}
 
         {/* Content */}
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-          <EmoticonText content={message.content} />
-        </p>
+        {message.type === 'voice' ? (
+          <div className="mt-1">
+            <audio src={message.content} controls className="h-10 w-64 max-w-full" />
+          </div>
+        ) : message.type === 'sketch' ? (
+          <div className="mt-1 flex justify-center bg-white rounded-lg p-1 border">
+            <img src={message.content} alt="Sketch" className="max-w-xs md:max-w-sm rounded object-contain max-h-64" />
+          </div>
+        ) : (
+          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+            <EmoticonText content={message.content} />
+          </p>
+        )}
 
         {/* System message */}
         {message.type === 'system' && (

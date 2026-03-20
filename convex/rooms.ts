@@ -187,6 +187,15 @@ export const joinRoom = mutation({
     const room = await ctx.db.get(args.roomId);
     if (!room) throw new Error('Room not found');
 
+    const user = await ctx.db.get(userId);
+    const isStaff = user?.role && ['owner', 'admin', 'moderator', 'staff'].includes(user.role);
+
+    if (room.password && !isStaff) {
+      if (args.password !== room.password) {
+        throw new Error('Incorrect room password');
+      }
+    }
+
     // Check if already a member
     const existing = await ctx.db
       .query('roomMembers')

@@ -13,14 +13,17 @@ import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as badges from "../badges.js";
 import type * as calls from "../calls.js";
+import type * as crons from "../crons.js";
 import type * as gamification from "../gamification.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
+import type * as minigames from "../minigames.js";
 import type * as moderation from "../moderation.js";
 import type * as notifications from "../notifications.js";
 import type * as rooms from "../rooms.js";
 import type * as seed from "../seed.js";
 import type * as storage from "../storage.js";
+import type * as trivia from "../trivia.js";
 import type * as users from "../users.js";
 
 import type {
@@ -35,14 +38,17 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   badges: typeof badges;
   calls: typeof calls;
+  crons: typeof crons;
   gamification: typeof gamification;
   http: typeof http;
   messages: typeof messages;
+  minigames: typeof minigames;
   moderation: typeof moderation;
   notifications: typeof notifications;
   rooms: typeof rooms;
   seed: typeof seed;
   storage: typeof storage;
+  trivia: typeof trivia;
   users: typeof users;
 }>;
 

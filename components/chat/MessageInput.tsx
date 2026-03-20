@@ -8,12 +8,16 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { EmoticonPicker } from './EmoticonPicker';
+import { VoiceRecorder } from './VoiceRecorder';
+import { CanvasDraw } from './CanvasDraw';
 
 type Props = { roomId: Id<'rooms'> };
 
 export function MessageInput({ roomId }: Props) {
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
   const sendMessage = useMutation(api.messages.sendMessage);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -58,6 +62,30 @@ export function MessageInput({ roomId }: Props) {
     textareaRef.current?.focus();
   }
 
+  if (isRecording) {
+    return (
+      <div className="border-border bg-background border-t p-3">
+        <VoiceRecorder 
+          roomId={roomId} 
+          onCancel={() => setIsRecording(false)} 
+          onSendComplete={() => setIsRecording(false)} 
+        />
+      </div>
+    );
+  }
+
+  if (isDrawing) {
+    return (
+      <div className="border-border bg-background border-t p-3">
+        <CanvasDraw 
+          roomId={roomId} 
+          onCancel={() => setIsDrawing(false)} 
+          onSendComplete={() => setIsDrawing(false)} 
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="border-border bg-background border-t p-3">
       <div className="border-border focus-within:border-primary focus-within:ring-primary/20 flex items-end gap-2 rounded-xl border px-3 py-2 transition-all focus-within:ring-2">
@@ -86,6 +114,30 @@ export function MessageInput({ roomId }: Props) {
         <div className="mb-0.5">
           <EmoticonPicker onPick={insertToken} />
         </div>
+
+        {/* Voice button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-0.5 h-8 px-2 text-muted-foreground hover:text-foreground"
+          onClick={() => setIsRecording(true)}
+          disabled={sending}
+          aria-label="Record voice message"
+        >
+          <Icon icon="solar:microphone-2-linear" className="size-4" />
+        </Button>
+
+        {/* Draw button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-0.5 h-8 px-2 text-muted-foreground hover:text-foreground"
+          onClick={() => setIsDrawing(true)}
+          disabled={sending}
+          aria-label="Draw sketch"
+        >
+          <Icon icon="solar:pen-new-square-linear" className="size-4" />
+        </Button>
 
         {/* Send button */}
         <Button

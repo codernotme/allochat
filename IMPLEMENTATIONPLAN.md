@@ -609,6 +609,32 @@ GIPHY_API_KEY=...
 
 ---
 
+### Phase 15 — Advanced Interactive Chat Features
+
+#### Voice Messages & Drawing
+- Custom `VoiceRecorder` component capturing audio via `MediaRecorder` API.
+- Custom `CanvasDraw` component for quick sketch sharing.
+- Both upload to Convex Storage (or Cloudinary) and dispatch as `messages` with `type: 'voice'` or `type: 'sketch'`.
+
+#### Whisper (Secret Messages)
+- Modify `messages` table schema to include `whisperTo: v.optional(v.id("users"))`.
+- Update `watchMessages` query to only return whispers if the current user is the sender or the `whisperTo` recipient.
+- Add `/w @username text` slash command and a "Whisper" button on member profiles.
+
+#### Simple Minigames & Leaderboards
+- Build interactive message types for Tic-Tac-Toe and Rock-Paper-Scissors.
+- Track Wins/Losses in a new `minigameStats` table.
+- Provide admin controls to reset leaderboards.
+
+#### Trivia Quiz Room Bot
+- Implement a Convex Cron Job that posts localized trivia questions into specific rooms enabled with the "trivia" addon.
+- Mutation `answerTrivia` that validates responses and awards XP / Coins to the first correct answer.
+
+#### Locked Rooms Staff Bypass
+- Update `joinRoom` and authentication logic in `rooms.ts` to skip password and age verification if the user calling the mutation has a role of `staff`, `moderator`, `admin`, or `owner`.
+
+---
+
 ## Complete Directory Structure
 
 ```

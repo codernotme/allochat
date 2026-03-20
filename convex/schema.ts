@@ -145,6 +145,13 @@ export default defineSchema({
     minAge: v.optional(v.number()),
     enabledAddons: v.array(v.string()),
 
+    activeTrivia: v.optional(
+      v.object({
+        question: v.string(),
+        answers: v.array(v.string()),
+      })
+    ),
+
     ownerId: v.id('users'),
     topic: v.optional(v.string()),
     announcement: v.optional(v.string()),
@@ -204,9 +211,11 @@ export default defineSchema({
       v.literal('system'),
       v.literal('gift'),
       v.literal('voice'),
+      v.literal('sketch'),
       v.literal('poll')
     ),
     replyTo: v.optional(v.id('messages')),
+    whisperTo: v.optional(v.id('users')),
     isPinned: v.boolean(),
     isDeleted: v.boolean(),
     deletedAt: v.optional(v.number()),
@@ -394,6 +403,17 @@ export default defineSchema({
     rank: v.number(),
     updatedAt: v.number(),
   }).index('byTypeAndPeriod', ['type', 'period', 'score']),
+
+  minigames: defineTable({
+    gameType: v.string(),
+    player1Id: v.id('users'),
+    player2Id: v.optional(v.id('users')),
+    roomId: v.id('rooms'),
+    state: v.any(),
+    status: v.union(v.literal('pending'), v.literal('completed')),
+    winnerId: v.optional(v.id('users')),
+    createdAt: v.number(),
+  }).index('byRoomAndStatus', ['roomId', 'status']),
 
   // ══════════════════════════════════════════
   //  MONETIZATION
