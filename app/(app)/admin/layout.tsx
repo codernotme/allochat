@@ -30,6 +30,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <AdminNavLink href="/admin" icon="solar:widget-2-linear" label="Overview" />
           <AdminNavLink href="/admin/users" icon="solar:users-group-rounded-linear" label="Users" />
           <AdminNavLink href="/admin/rooms" icon="solar:chat-round-dots-linear" label="Rooms" />
+          <AdminNavLink href="/admin/reports" icon="solar:flag-linear" label="Reports" />
+          <AdminNavLink href="/admin/content-filter" icon="solar:shield-warning-linear" label="Word Filter" />
+          <AdminNavLink href="/admin/gifts" icon="solar:gift-linear" label="Gifts" />
+          <AdminNavLink href="/admin/badges" icon="solar:medal-star-linear" label="Badges" />
+          <AdminNavLink href="/admin/audit" icon="solar:clipboard-list-linear" label="Audit Logs" />
           <AdminNavLink href="/admin/settings" icon="solar:settings-linear" label="Site Settings" />
           <div className="mt-4 pt-4 border-t border-border">
             <AdminNavLink href="/lobby" icon="solar:alt-arrow-left-linear" label="Back to App" />

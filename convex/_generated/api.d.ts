@@ -16,6 +16,7 @@ import type * as calls from "../calls.js";
 import type * as gamification from "../gamification.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
+import type * as moderation from "../moderation.js";
 import type * as notifications from "../notifications.js";
 import type * as rooms from "../rooms.js";
 import type * as seed from "../seed.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   gamification: typeof gamification;
   http: typeof http;
   messages: typeof messages;
+  moderation: typeof moderation;
   notifications: typeof notifications;
   rooms: typeof rooms;
   seed: typeof seed;

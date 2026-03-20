@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server';
 import { api } from './_generated/api';
 import { getAuthUserId } from '@convex-dev/auth/server';
 import { paginationOptsValidator } from 'convex/server';
+import { applyContentFilters } from './moderation';
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
@@ -138,10 +139,12 @@ export const sendMessage = mutation({
     if (recentFromUser.length >= 6) throw new Error('FLOOD_LIMIT_REACHED');
 
     const now = Date.now();
+    const filteredContent = await applyContentFilters(ctx, args.content);
+
     const messageId = await ctx.db.insert('messages', {
       roomId: args.roomId,
       senderId: userId,
-      content: args.content,
+      content: filteredContent,
       type: args.type ?? 'text',
       replyTo: args.replyTo,
       isPinned: false,
@@ -361,10 +364,12 @@ export const sendDirectMessage = mutation({
       lastMessagePreview: args.content.slice(0, 100),
     });
 
+    const filteredContent = await applyContentFilters(ctx, args.content);
+
     const dmId = await ctx.db.insert('directMessages', {
       conversationId: conversation._id,
       senderId: userId,
-      content: args.content,
+      content: filteredContent,
       isDeleted: false,
       createdAt: now,
     });

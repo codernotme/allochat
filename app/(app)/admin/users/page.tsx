@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
@@ -16,6 +18,8 @@ export default function AdminUsersPage() {
   const users = useQuery(api.admin.getAllUsers, { limit: 100 });
   const setUserBanStatus = useMutation(api.admin.setUserBanStatus);
   const updateUserRole = useMutation(api.admin.updateUserRole);
+  const muteUser = useMutation(api.admin.muteUser);
+  const adjustWallet = useMutation(api.admin.adjustWallet);
 
   const filteredUsers = users?.filter(u => 
     u.username.toLowerCase().includes(search.toLowerCase()) || 
@@ -53,7 +57,7 @@ export default function AdminUsersPage() {
       <div className="relative max-w-sm">
         <Icon icon="solar:magnifer-linear" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
         <Input 
-          placeholder="Search by name, username or email…" 
+          placeholder="Search items…" 
           className="pl-9"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -101,36 +105,141 @@ export default function AdminUsersPage() {
                     </select>
                   </td>
                   <td className="px-4 py-3">
-                    {user.isBanned ? (
-                      <Badge variant="destructive" className="text-[10px]">Banned</Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</Badge>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {user.isBanned ? (
+                        <Badge variant="destructive" className="text-[10px] w-fit">Banned</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 w-fit">Active</Badge>
+                      )}
+                      {user.isMuted && (
+                        <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-500 w-fit">Muted</Badge>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 tabular-nums">
                     Lv. {user.level || 1} ({user.xp || 0} XP)
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className={user.isBanned ? 'text-green-600' : 'text-destructive'}
-                      onClick={() => toggleBan(user._id, !!user.isBanned)}
-                    >
-                      {user.isBanned ? 'Unban' : 'Ban'}
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      {/* Wallet Dialog */}
+                      <WalletDialog 
+                        userId={user._id} 
+                        username={user.username} 
+                        onAdjust={(amt: number, desc: string) => adjustWallet({ userId: user._id, amount: amt, description: desc })} 
+                      />
+                      
+                      {/* Mute Dialog */}
+                      <MuteDialog 
+                        userId={user._id} 
+                        isMuted={user.isMuted}
+                        onMute={(mins: number, reason: string) => muteUser({ userId: user._id, durationMinutes: mins, reason })} 
+                      />
+
+                      <Button 
+                        variant="ghost" 
+                        size={null} 
+                        className={`h-8 w-8 ${user.isBanned ? 'text-green-600' : 'text-destructive'}`}
+                        title={user.isBanned ? 'Unban' : 'Ban'}
+                        onClick={() => toggleBan(user._id, !!user.isBanned)}
+                      >
+                        <Icon icon={user.isBanned ? "solar:user-check-linear" : "solar:user-block-linear"} className="size-4" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {(!filteredUsers || filteredUsers.length === 0) && (
-            <div className="p-12 text-center text-muted-foreground italic">
-              No users found matching your search.
-            </div>
-          )}
         </div>
       </Card>
     </div>
+  );
+}
+
+function MuteDialog({ isMuted, onMute }: { userId: any; isMuted?: boolean; onMute: (mins: number, reason: string) => Promise<any> }) {
+  const [duration, setDuration] = useState(60);
+  const [reason, setReason] = useState('Violation of rules');
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger 
+        render={
+          <Button variant="ghost" size={null} title="Mute User" className={`h-8 w-8 ${isMuted ? 'text-amber-500' : ''}`} />
+        }
+      >
+        <Icon icon="solar:muted-linear" className="size-4" />
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mute User</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label>Duration (Minutes)</Label>
+            <Input type="number" value={duration} onChange={e => setDuration(Number(e.target.value))} />
+            <div className="flex gap-2">
+              {[60, 1440, 10080].map(d => (
+                <Button key={d} variant="outline" size="xs" onClick={() => setDuration(d)}>
+                  {d === 60 ? '1h' : d === 1440 ? '1d' : '1w'}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Reason</Label>
+            <Input value={reason} onChange={e => setReason(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={async () => {
+            await onMute(duration, reason);
+            setOpen(false);
+            toast.success('User muted');
+          }}>Apply Mute</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function WalletDialog({ username, onAdjust }: { userId: any; username: string; onAdjust: (amt: number, desc: string) => Promise<any> }) {
+  const [amount, setAmount] = useState(100);
+  const [reason, setReason] = useState('Admin bonus');
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        render={
+          <Button variant="ghost" size={null} title="Adjust Wallet" className="h-8 w-8" />
+        }
+      >
+        <Icon icon="solar:wallet-money-linear" className="size-4" />
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Adjust Wallet: @{username}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label>Amount (AlloCoins)</Label>
+            <Input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} />
+            <p className="text-[10px] text-muted-foreground italic">Use negative value to remove coins</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Reason / Description</Label>
+            <Input value={reason} onChange={e => setReason(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={async () => {
+            await onAdjust(amount, reason);
+            setOpen(false);
+            toast.success('Wallet adjusted');
+          }}>Execute Transaction</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
