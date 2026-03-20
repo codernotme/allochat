@@ -1,4 +1,4 @@
-export type SubscriptionTier = 'free' | 'premium' | 'pro' | 'elite';
+export type SubscriptionTier = 'free' | 'premium' | 'pro' | 'elite' | 'vip';
 
 export type SubscriptionPlan = {
   id: SubscriptionTier;
@@ -150,6 +150,34 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       rooms: -1,
       roomMembers: -1,
       fileUploadMB: 1000,
+      callParticipants: -1,
+      messageHistory: -1,
+      customStatus: true,
+      badges: true,
+      nameEffects: true,
+      apiAccess: true,
+      whiteLabel: true,
+    },
+  },
+  {
+    id: 'vip',
+    name: 'VIP',
+    price: 0,
+    priceAnnual: 0,
+    stripePriceId: '',
+    stripeAnnualPriceId: '',
+    color: '#10b981',
+    badge: '💎',
+    description: 'Special tier granted by administrators',
+    features: [
+      'Everything in Elite',
+      'VIP exclusive badges',
+      'Direct line to owners',
+    ],
+    limits: {
+      rooms: -1,
+      roomMembers: -1,
+      fileUploadMB: 2000,
       callParticipants: -1,
       messageHistory: -1,
       customStatus: true,

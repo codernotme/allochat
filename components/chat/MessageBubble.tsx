@@ -9,16 +9,21 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { EmoticonText } from './EmoticonText';
 import { Icon } from '@iconify/react';
-
-type Props = { message: any; grouped?: boolean };
+import { MessageActions } from './MessageActions';
 
 const EMOJI_QUICK = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
+type Props = { message: any; grouped?: boolean };
+
 export function MessageBubble({ message, grouped }: Props) {
+  const user = useQuery(api.users.getCurrentUser);
   const addReaction = useMutation(api.messages.addReaction);
   const removeReaction = useMutation(api.messages.removeReaction);
   const deleteMsg = useMutation(api.messages.deleteMessage);
-  const [showActions, setShowActions] = useState(false);
+  const editMessage = useMutation(api.messages.editMessage);
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(message.content);
 
   const time = new Date(message.createdAt).toLocaleTimeString([], {
     hour: '2-digit',
@@ -40,6 +45,19 @@ export function MessageBubble({ message, grouped }: Props) {
     }
   }
 
+  async function handleSaveEdit() {
+    if (editContent.trim() === message.content) { setIsEditing(false); return; }
+    try {
+      await editMessage({ messageId: message._id, newContent: editContent.trim() });
+      setIsEditing(false);
+    } catch {
+      toast.error('Failed to edit message');
+    }
+  }
+
+  const isOwn = user?._id === message.senderId;
+  const canDelete = isOwn || user?.role === 'admin' || user?.role === 'owner' || user?.role === 'moderator';
+
   if (message.isDeleted) {
     return (
       <div className="py-0.5 px-12">
@@ -53,10 +71,9 @@ export function MessageBubble({ message, grouped }: Props) {
       className={cn(
         "group relative flex gap-3 px-4 py-1 transition-all hover:bg-accent/40",
         !grouped && "mt-3",
-        message.whisperTo && "bg-purple-500/5 hover:bg-purple-500/10 border-l-2 border-purple-500"
+        message.whisperTo && "bg-purple-500/5 hover:bg-purple-500/10 border-l-2 border-purple-500",
+        isEditing && "bg-muted/50"
       )}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
     >
       {/* Avatar */}
       {!grouped ? (
@@ -110,6 +127,28 @@ export function MessageBubble({ message, grouped }: Props) {
           <div className="mt-1 flex justify-center bg-white rounded-lg p-1 border">
             <img src={message.content} alt="Sketch" className="max-w-xs md:max-w-sm rounded object-contain max-h-64" />
           </div>
+        ) : isEditing ? (
+          <div className="mt-1 flex flex-col gap-2 max-w-sm w-full">
+            <textarea
+              className="bg-background border-primary/50 text-foreground resize-none rounded-lg border p-2 text-sm shadow-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-full"
+              value={editContent}
+              onChange={(e) => {
+                setEditContent(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setIsEditing(false);
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(); }
+              }}
+              autoFocus
+              rows={1}
+            />
+            <div className="flex gap-1 justify-end">
+              <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setIsEditing(false)}>Cancel</Button>
+              <Button size="sm" className="h-6 text-xs px-3" onClick={handleSaveEdit}>Save</Button>
+            </div>
+          </div>
         ) : (
           <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
             <EmoticonText content={message.content} />
@@ -138,30 +177,18 @@ export function MessageBubble({ message, grouped }: Props) {
       </div>
 
       {/* Hover actions */}
-      {showActions && (
-        <div className="border-border bg-background absolute -top-3 right-2 flex items-center gap-1 rounded-lg border p-1 shadow-md">
-          {EMOJI_QUICK.map((emoji) => (
-            <button
-              key={emoji}
-              onClick={() => handleReaction(emoji)}
-              className="hover:bg-accent rounded p-1 text-sm transition-colors"
-              title={`React with ${emoji}`}
-            >
-              {emoji}
-            </button>
-          ))}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            onClick={async () => {
-              try { await deleteMsg({ messageId: message._id }); }
-              catch { toast.error('Cannot delete this message'); }
-            }}
-          >
-            🗑️
-          </Button>
-        </div>
+      {!isEditing && (
+        <MessageActions 
+          isOwn={isOwn}
+          canDelete={canDelete}
+          onReact={handleReaction}
+          onReply={() => window.dispatchEvent(new CustomEvent('reply-to', { detail: message }))}
+          onEdit={() => { setIsEditing(true); setEditContent(message.content); }}
+          onDelete={async () => {
+            try { await deleteMsg({ messageId: message._id }); }
+            catch { toast.error('Cannot delete message'); }
+          }}
+        />
       )}
     </div>
   );

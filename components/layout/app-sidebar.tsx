@@ -9,7 +9,9 @@ import { api } from '@/convex/_generated/api';
 import { getLevelFromXP } from '@/lib/data/xp-actions';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { NAV_ITEMS } from '@/lib/data/nav-items';
+import { NAV_ITEMS, getNavItemsForUser } from '@/lib/data/nav-items';
+import type { Role } from '@/lib/data/roles';
+import type { SubscriptionTier } from '@/lib/data/subscription-plans';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 
@@ -20,10 +22,14 @@ export function AppSidebar() {
   const { xpInCurrentLevel, xpToNextLevel } = getLevelFromXP(user?.xp || 0);
   const [collapsed, setCollapsed] = useState(false);
 
-  // TODO: filter by user role after auth is connected
-  const mainItems = NAV_ITEMS.filter((i) => i.section === 'main');
-  const socialItems = NAV_ITEMS.filter((i) => i.section === 'social');
-  const discoverItems = NAV_ITEMS.filter((i) => i.section === 'discover');
+  const role: Role = user?.role || 'user';
+  const tier: SubscriptionTier = user?.subscriptionTier || 'free';
+  const allowedItems = getNavItemsForUser(role, tier);
+
+  const mainItems = allowedItems.filter((i) => i.section === 'main');
+  const socialItems = allowedItems.filter((i) => i.section === 'social');
+  const discoverItems = allowedItems.filter((i) => i.section === 'discover');
+  const adminItems = allowedItems.filter((i) => i.section === 'admin');
 
   return (
     <aside
@@ -47,6 +53,9 @@ export function AppSidebar() {
         <NavSection label="Main" items={mainItems} collapsed={collapsed} pathname={pathname} />
         <NavSection label="Social" items={socialItems} collapsed={collapsed} pathname={pathname} />
         <NavSection label="Discover" items={discoverItems} collapsed={collapsed} pathname={pathname} />
+        {adminItems.length > 0 && (
+          <NavSection label="Admin" items={adminItems} collapsed={collapsed} pathname={pathname} />
+        )}
       </nav>
 
       {/* Bottom: collapse toggle + sign out */}
