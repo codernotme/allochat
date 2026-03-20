@@ -1,17 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { useAuthActions } from '@convex-dev/auth/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Icon } from '@iconify/react';
 
-const STEPS = ['Profile', 'Interests', 'Room', 'Done'] as const;
+const STEPS = ['Profile', 'Age', 'Interests', 'Social', 'Room', 'Done'] as const;
 type Step = (typeof STEPS)[number];
 
 const INTERESTS = [
@@ -29,12 +28,39 @@ const SUGGESTED_ROOMS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const currentUser = useQuery(api.users.getCurrentUser);
   const [step, setStep] = useState<Step>('Profile');
+  
+  // Profile State
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
+  
+  // Age State
+  const [age, setAge] = useState<string>('');
+  
+  // Interests State
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  
+  // Social State
+  const [twitter, setTwitter] = useState('');
+  const [github, setGithub] = useState('');
+  
   const [loading, setLoading] = useState(false);
+  const [hasInit, setHasInit] = useState(false);
+
+  // Auto-fill from current user data
+  useEffect(() => {
+    if (currentUser && !hasInit) {
+      if (currentUser.displayName && currentUser.displayName !== 'User') {
+        setDisplayName(currentUser.displayName);
+      }
+      if (currentUser.username && !currentUser.username.startsWith('user')) {
+        setUsername(currentUser.username);
+      }
+      setHasInit(true);
+    }
+  }, [currentUser, hasInit]);
 
   const stepIndex = STEPS.indexOf(step);
   const progress = ((stepIndex + 1) / STEPS.length) * 100;
@@ -50,11 +76,18 @@ export default function OnboardingPage() {
   async function handleFinish() {
     setLoading(true);
     try {
+      const socialLinks = [];
+      if (twitter) socialLinks.push({ platform: 'twitter', url: twitter });
+      if (github) socialLinks.push({ platform: 'github', url: github });
+
       await updateProfile({
         displayName: displayName.trim(),
         username: username.trim(),
         bio: bio.trim(),
         interests: selectedInterests,
+        age: age ? parseInt(age) : undefined,
+        socialLinks: socialLinks.length > 0 ? socialLinks : undefined,
+        onboardingCompleted: true,
       });
       toast.success('Welcome to AlloChat!');
       router.push('/lobby');
@@ -66,7 +99,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-md mx-auto py-10 px-4">
       {/* Progress */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -79,11 +112,11 @@ export default function OnboardingPage() {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {STEPS.map((s, i) => (
             <span
               key={s}
-              className={`text-xs font-medium transition-colors ${i <= stepIndex ? 'text-primary' : 'text-muted-foreground'}`}
+              className={`text-[10px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap ${i <= stepIndex ? 'text-primary' : 'text-muted-foreground'}`}
             >
               {s}
             </span>
@@ -135,10 +168,44 @@ export default function OnboardingPage() {
           <Button
             className="h-11 w-full"
             disabled={!displayName.trim() || !username.trim()}
-            onClick={() => setStep('Interests')}
+            onClick={() => setStep('Age')}
           >
             Continue →
           </Button>
+        </div>
+      )}
+
+      {/* Step: Age */}
+      {step === 'Age' && (
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5 text-center mb-4">
+                <Icon icon="solar:calendar-bold-duotone" className="size-12 text-primary mx-auto" />
+                <h3 className="text-lg font-bold">How old are you?</h3>
+                <p className="text-muted-foreground text-sm">We use this to customize your experience and ensure safety.</p>
+            </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="age">Your Age</Label>
+            <Input
+              id="age"
+              type="number"
+              placeholder="Enter your age"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              min={13}
+              max={120}
+            />
+            <p className="text-muted-foreground text-[10px]">You must be at least 13 to use AlloChat.</p>
+          </div>
+          <div className="mt-4 flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => setStep('Profile')}>← Back</Button>
+            <Button
+                className="flex-1"
+                disabled={!age || parseInt(age) < 13}
+                onClick={() => setStep('Interests')}
+            >
+                Continue →
+            </Button>
+          </div>
         </div>
       )}
 
@@ -168,13 +235,61 @@ export default function OnboardingPage() {
             })}
           </div>
           <div className="mt-2 flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => setStep('Profile')}>← Back</Button>
+            <Button variant="outline" className="flex-1" onClick={() => setStep('Age')}>← Back</Button>
             <Button
               className="flex-1"
               disabled={selectedInterests.length < 3}
-              onClick={() => setStep('Room')}
+              onClick={() => setStep('Social')}
             >
               Continue →
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Step: Social */}
+      {step === 'Social' && (
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5 text-center mb-4">
+                <Icon icon="solar:link-bold-duotone" className="size-12 text-primary mx-auto" />
+                <h3 className="text-lg font-bold">Social Handles</h3>
+                <p className="text-muted-foreground text-sm">Connect your other profiles (optional).</p>
+            </div>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+                <Label htmlFor="twitter">Twitter / X</Label>
+                <div className="relative">
+                    <Icon icon="brandico:twitter-bird" className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                        id="twitter"
+                        placeholder="https://x.com/username"
+                        className="pl-10"
+                        value={twitter}
+                        onChange={(e) => setTwitter(e.target.value)}
+                    />
+                </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+                <Label htmlFor="github">GitHub</Label>
+                <div className="relative">
+                    <Icon icon="brandico:github" className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                        id="github"
+                        placeholder="https://github.com/username"
+                        className="pl-10"
+                        value={github}
+                        onChange={(e) => setGithub(e.target.value)}
+                    />
+                </div>
+            </div>
+          </div>
+          <div className="mt-4 flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => setStep('Interests')}>← Back</Button>
+            <Button
+                className="flex-1"
+                onClick={() => setStep('Room')}
+            >
+                {(!twitter && !github) ? 'Skip' : 'Continue'} →
             </Button>
           </div>
         </div>
@@ -198,7 +313,7 @@ export default function OnboardingPage() {
             ))}
           </div>
           <div className="mt-2 flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => setStep('Interests')}>← Back</Button>
+            <Button variant="outline" className="flex-1" onClick={() => setStep('Social')}>← Back</Button>
             <Button className="flex-1" onClick={() => setStep('Done')}>Continue →</Button>
           </div>
         </div>

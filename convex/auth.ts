@@ -159,40 +159,72 @@ const providers = [
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers,
   callbacks: {
-    const { email, name, username } = getProfileStrings(args.profile);
-    const defaults = getDefaultUserData(email, name, username);
+    async createOrUpdateUser(ctx, args) {
+      const { email, name, username } = getProfileStrings(args.profile);
+      const defaults = getDefaultUserData(email, name, username);
 
-    let userId = args.existingUserId;
+      let userId = args.existingUserId;
 
-    // 1. If no existing session, check for another account with the same email
-    if (!userId && email) {
-      const existingUser = await ctx.db
-        .query('users')
-        .withIndex('email', (q) => q.eq('email', email))
-        .unique();
-      if (existingUser) {
-        userId = existingUser._id;
-      }
-    }
-
-    if (userId) {
-      const current = await ctx.db.get(userId);
-      if (!current) {
-        throw new Error('User not found during auth update');
+      // 1. If no existing session, check for another account with the same email
+      if (!userId && email) {
+        const existingUser = await ctx.db
+          .query('users')
+          .filter((q) => q.eq(q.field('email'), email))
+          .unique();
+        if (existingUser) {
+          userId = existingUser._id;
+        }
       }
 
-      const patch: Record<string, unknown> = {
-        updatedAt: Date.now(),
-      };
+      if (userId) {
+        const current = await ctx.db.get(userId);
+        if (!current) {
+          throw new Error('User not found during auth update');
+        }
 
-      // Merge metadata if missing
-      if (!current.email && defaults.email) patch.email = defaults.email;
-      if (!current.displayName || current.displayName === 'User') {
-        patch.displayName = defaults.displayName;
+        const patch: Record<string, unknown> = {
+          updatedAt: Date.now(),
+        };
+
+        // Merge metadata if missing
+        if (!current.email && defaults.email) patch.email = defaults.email;
+        if (!current.displayName || current.displayName === 'User') {
+          patch.displayName = defaults.displayName;
+        }
+
+        if (
+          !current.username ||
+          current.username.length === 0 ||
+          current.username.startsWith('user')
+        ) {
+          // Only update username if the one we have is generic or missing
+          // but avoid overwriting a custom username if the new one is just a default
+          if (username) {
+            patch.username = username; // User provided a specific one in signup
+          } else if (!current.username) {
+            patch.username = withEntropy(defaults.username);
+          }
+        }
+
+        if (!current.emailVerified && current.email) {
+          patch.emailVerified = true;
+        }
+
+        await ctx.db.patch(userId, patch);
+        return userId;
       }
 
-      if (!current.username || current.username.length === 0 || current.username.startsWith('user')) {
-        // Only update username if the one we have is generic or missing
-        // but avoid overwriting a custom username if the new one is just a default
-        if (username) {
-          patch.username = username; // User provided a specific
+      // 2. Create new user
+      const existingUsers = await ctx.db.query('users').take(1);
+      const isFirstUser = existingUsers.length === 0;
+
+      const newUserId = await ctx.db.insert('users', {
+        ...defaults,
+        username: username || withEntropy(defaults.username),
+        role: isFirstUser ? 'owner' : 'user',
+        emailVerified: true,
+      });
+      return newUserId;
+    },
+  },
+});

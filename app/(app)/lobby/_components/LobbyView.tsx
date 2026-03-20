@@ -3,7 +3,8 @@
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { ROOM_CATEGORIES } from '@/lib/data/room-categories';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -11,8 +12,17 @@ import { cn } from '@/lib/utils';
 import { Icon } from '@iconify/react';
 
 export function LobbyView() {
+  const router = useRouter();
+  const currentUser = useQuery(api.users.getCurrentUser);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Redirect to onboarding if not completed
+  useEffect(() => {
+    if (currentUser && currentUser.onboardingCompleted === false) {
+      router.replace('/onboarding');
+    }
+  }, [currentUser, router]);
 
   // Query rooms from Convex (will work once schema is deployed)
   const rooms = useQuery((api as any).rooms.listPublicRooms, {

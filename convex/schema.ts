@@ -110,7 +110,7 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   })
     .index('byUsername', ['username'])
-    .index('email', ['email'])
+    .index('byEmail', ['email'])
     .index('byPresence', ['presenceStatus'])
     .index('byRole', ['role'])
     .searchIndex('searchUsers', {

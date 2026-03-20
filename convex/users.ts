@@ -90,6 +90,16 @@ export const updateProfile = mutation({
     language: v.optional(v.string()),
     interests: v.optional(v.array(v.string())),
     avatar: v.optional(v.string()),
+    age: v.optional(v.number()),
+    socialLinks: v.optional(
+      v.array(
+        v.object({
+          platform: v.string(),
+          url: v.string(),
+        })
+      )
+    ),
+    onboardingCompleted: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
