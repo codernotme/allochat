@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
-import { useRouter } from 'next/navigation';
 import { useConvex } from 'convex/react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +24,6 @@ type FormData = z.infer<typeof schema>;
 export default function SignInEmailPage() {
   const { signIn } = useAuthActions();
   const convex = useConvex();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -53,7 +51,7 @@ export default function SignInEmailPage() {
       }
 
       await signIn('password', { email, password: data.password, flow: 'signIn' });
-      router.push('/');
+      window.location.assign('/lobby');
     } catch (err) {
       toast.error('Invalid email/username or password');
     } finally {

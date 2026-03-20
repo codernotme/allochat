@@ -123,6 +123,15 @@ export function MessageBubble({ message, grouped }: Props) {
           <div className="mt-1">
             <audio src={message.content} controls className="h-10 w-64 max-w-full" />
           </div>
+        ) : message.type === 'media' ? (
+          <div className="mt-1">
+            <img
+              src={message.content}
+              alt="Shared media"
+              className="max-h-80 max-w-full rounded-lg border object-contain"
+              loading="lazy"
+            />
+          </div>
         ) : message.type === 'sketch' ? (
           <div className="mt-1 flex justify-center bg-white rounded-lg p-1 border">
             <img src={message.content} alt="Sketch" className="max-w-xs md:max-w-sm rounded object-contain max-h-64" />
@@ -132,6 +141,7 @@ export function MessageBubble({ message, grouped }: Props) {
             <textarea
               className="bg-background border-primary/50 text-foreground resize-none rounded-lg border p-2 text-sm shadow-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-full"
               value={editContent}
+              aria-label="Edit message"
               onChange={(e) => {
                 setEditContent(e.target.value);
                 e.target.style.height = 'auto';
@@ -150,7 +160,7 @@ export function MessageBubble({ message, grouped }: Props) {
             </div>
           </div>
         ) : (
-          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">
             <EmoticonText content={message.content} />
           </p>
         )}

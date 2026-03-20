@@ -16,6 +16,14 @@ const nextConfig = {
 			},
 		],
 	},
+	// Explicitly map routes if they feel "unreachable" in some environments
+	async rewrites() {
+		return [
+			{ source: '/lobby', destination: '/lobby' },
+			{ source: '/admin/:path*', destination: '/admin/:path*' },
+			{ source: '/onboarding', destination: '/onboarding' },
+		];
+	},
 }
 
 export default nextConfig

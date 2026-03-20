@@ -11,7 +11,6 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS, getNavItemsForUser } from '@/lib/data/nav-items';
 import type { Role } from '@/lib/data/roles';
-import type { SubscriptionTier } from '@/lib/data/subscription-plans';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 
@@ -23,8 +22,7 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
 
   const role: Role = user?.role || 'user';
-  const tier: SubscriptionTier = user?.subscriptionTier || 'free';
-  const allowedItems = getNavItemsForUser(role, tier);
+  const allowedItems = getNavItemsForUser(role);
 
   const mainItems = allowedItems.filter((i) => i.section === 'main');
   const socialItems = allowedItems.filter((i) => i.section === 'social');

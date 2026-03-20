@@ -24,7 +24,7 @@ export const generateToken = action({
     const wsUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL;
 
     if (!apiKey || !apiSecret || !wsUrl) {
-      throw new Error('LiveKit environment variables not configured');
+      return '';
     }
 
     const at: AccessToken = new AccessToken(apiKey, apiSecret, {

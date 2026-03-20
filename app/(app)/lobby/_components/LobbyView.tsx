@@ -5,7 +5,7 @@ import { api } from '@/convex/_generated/api';
 import { ROOM_CATEGORIES } from '@/lib/data/room-categories';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,13 @@ export function LobbyView() {
     }
   }, [currentUser, router]);
 
+  // Query rooms from Convex (will work once schema is deployed)
+  const rooms = useQuery((api as any).rooms.listPublicRooms, {
+    category: selectedCategory === 'all' ? undefined : selectedCategory,
+  });
+
+  const featured = useQuery((api as any).rooms.getFeaturedRooms);
+
   if (currentUser === undefined) {
     return (
       <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
@@ -31,13 +38,6 @@ export function LobbyView() {
       </div>
     );
   }
-
-  // Query rooms from Convex (will work once schema is deployed)
-  const rooms = useQuery((api as any).rooms.listPublicRooms, {
-    category: selectedCategory === 'all' ? undefined : selectedCategory,
-  });
-
-  const featured = useQuery((api as any).rooms.getFeaturedRooms);
 
   return (
     <div className="flex flex-col gap-6 p-6">

@@ -7,7 +7,6 @@ import { api } from '@/convex/_generated/api';
 import { Icon } from '@iconify/react';
 import { getNavItemsForUser } from '@/lib/data/nav-items';
 import type { Role } from '@/lib/data/roles';
-import type { SubscriptionTier } from '@/lib/data/subscription-plans';
 
 import {
   CommandDialog,
@@ -28,7 +27,6 @@ export function CommandPalette() {
 
   const user = useQuery(api.users.getCurrentUser);
   const role: Role = user?.role || 'user';
-  const tier: SubscriptionTier = user?.subscriptionTier || 'free';
 
   // Live room search
   const rooms = useQuery(
@@ -61,7 +59,7 @@ export function CommandPalette() {
     command();
   }, []);
 
-  const navItems = getNavItemsForUser(role, tier);
+  const navItems = getNavItemsForUser(role);
 
   return (
     <CommandDialog

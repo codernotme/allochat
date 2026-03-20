@@ -18,23 +18,22 @@ import { Icon } from '@iconify/react';
 export function UserMenu() {
   const user = useQuery(api.users.getCurrentUser);
   const { signOut } = useAuthActions();
+  const profileHref = user?._id ? `/profile/${user._id}` : '/settings/profile';
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <button
-          className="hover:bg-muted relative flex items-center gap-2 rounded-full p-1 transition-colors"
-          aria-label="User menu"
-        >
-          <Avatar className="size-8 ring-2 ring-border">
-            <AvatarImage src={(user as any)?.avatarUrl || user?.avatar} />
-            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-              {user?.displayName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || (
-                <Icon icon="solar:user-circle-linear" className="size-4" />
-              )}
-            </AvatarFallback>
-          </Avatar>
-        </button>
+      <DropdownMenuTrigger
+        className="hover:bg-muted relative flex items-center gap-2 rounded-full p-1 transition-colors"
+        aria-label="User menu"
+      >
+        <Avatar className="size-8 ring-2 ring-border">
+          <AvatarImage src={(user as any)?.avatarUrl || user?.avatar} />
+          <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+            {user?.displayName?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || (
+              <Icon icon="solar:user-circle-linear" className="size-4" />
+            )}
+          </AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-56" sideOffset={8}>
@@ -48,7 +47,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem className="p-0">
-          <Link href={`/profile/${user?._id}`} className="flex w-full items-center gap-2 px-3 py-2">
+          <Link href={profileHref} className="flex w-full items-center gap-2 px-3 py-2">
             <Icon icon="solar:user-circle-linear" className="size-4" />
             View Profile
           </Link>

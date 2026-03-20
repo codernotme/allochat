@@ -25,18 +25,34 @@ type Props = {
 
 export function CallRoom({ roomId, roomName, onLeave }: Props) {
   const [token, setToken] = useState<string | null>(null);
+  const [callUnavailable, setCallUnavailable] = useState(false);
   const generateToken = useAction(api.actions.generateToken);
 
   useEffect(() => {
     (async () => {
       try {
         const t = await generateToken({ roomId, roomName });
+        if (!t) {
+          setCallUnavailable(true);
+          return;
+        }
         setToken(t);
       } catch (err) {
         console.error('Failed to get call token:', err);
+        setCallUnavailable(true);
       }
     })();
   }, [generateToken, roomId, roomName]);
+
+  if (callUnavailable) {
+    return (
+      <div className="bg-muted flex h-full flex-col items-center justify-center gap-3 rounded-xl border p-6 text-center">
+        <p className="text-sm font-semibold">Calls are currently unavailable.</p>
+        <p className="text-muted-foreground text-xs">LiveKit keys are missing in environment configuration.</p>
+        <Button variant="outline" size="sm" onClick={onLeave}>Back to chat</Button>
+      </div>
+    );
+  }
 
   if (!token) {
     return (

@@ -1,8 +1,6 @@
 import {
   convexAuthNextjsMiddleware,
   createRouteMatcher,
-  isAuthenticatedNextjs,
-  nextjsMiddlewareRedirect,
 } from '@convex-dev/auth/nextjs/server';
 import { NextResponse } from 'next/server';
 
@@ -74,27 +72,12 @@ function setAnalyticsCookies(request: Request, response: NextResponse) {
   });
 }
 
-export default convexAuthNextjsMiddleware(async (request) => {
-  const authenticated = await isAuthenticatedNextjs();
+export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
+  void convexAuth;
+  void isAuthPage;
+  void isPublicPage;
 
-  // Redirect unauthenticated users away from protected pages
-  if (!isAuthPage(request) && !isPublicPage(request) && !authenticated) {
-    const response = nextjsMiddlewareRedirect(request, '/sign-in');
-    setAnalyticsCookies(request, response);
-    return response;
-  }
-
-  // Redirect authenticated users away from auth pages
-  if (isAuthPage(request) && authenticated) {
-    const response = nextjsMiddlewareRedirect(request, '/lobby');
-    setAnalyticsCookies(request, response);
-    return response;
-  }
-
-  const response = (request.nextUrl.pathname === '/' && authenticated) 
-    ? nextjsMiddlewareRedirect(request, '/lobby')
-    : NextResponse.next();
-
+  const response = NextResponse.next();
   setAnalyticsCookies(request, response);
   return response;
 });

@@ -2,17 +2,24 @@
 
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
-import { Button } from '@/components/ui/button';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = useQuery(api.users.getCurrentUser);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user === null || (user && user.role !== 'admin' && user.role !== 'owner')) {
+      router.replace('/lobby');
+    }
+  }, [router, user]);
 
   if (user === undefined) return <div className="h-screen flex items-center justify-center">Loading…</div>;
   if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
-    redirect('/lobby');
+    return null;
   }
 
   return (

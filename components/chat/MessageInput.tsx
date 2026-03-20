@@ -25,9 +25,11 @@ export function MessageInput({ roomId }: Props) {
     const text = content.trim();
     if (!text || sending) return;
 
+    const isMediaUrl = /^https?:\/\/.+/i.test(text) && /(\.gif($|\?)|\.png($|\?)|\.jpe?g($|\?)|\.webp($|\?)|giphy\.com|tenor\.com)/i.test(text);
+
     setSending(true);
     try {
-      await sendMessage({ roomId, content: text });
+      await sendMessage({ roomId, content: text, type: isMediaUrl ? 'media' : 'text' });
       setContent('');
       textareaRef.current?.focus();
     } catch (err: any) {
