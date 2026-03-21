@@ -13,7 +13,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (user === null || (user && user.role !== 'admin' && user.role !== 'owner')) {
-      router.replace('/lobby');
+      router.replace('/chat/lobby');
     }
   }, [router, user]);
 
@@ -37,18 +37,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="flex flex-col gap-1.5">
-          <AdminNavLink href="/admin" icon="solar:widget-2-linear" label="Overview" />
-          <AdminNavLink href="/admin/users" icon="solar:users-group-rounded-linear" label="Users" />
-          <AdminNavLink href="/admin/rooms" icon="solar:chat-round-dots-linear" label="Rooms" />
-          <AdminNavLink href="/admin/reports" icon="solar:flag-linear" label="Reports" />
-          <AdminNavLink href="/admin/content-filter" icon="solar:shield-warning-linear" label="Word Filter" />
-          <AdminNavLink href="/admin/gifts" icon="solar:gift-linear" label="Gifts" />
-          <AdminNavLink href="/admin/badges" icon="solar:medal-star-linear" label="Badges" />
-          <AdminNavLink href="/admin/addons" icon="solar:blocks-group-solid" label="Addons" />
-          <AdminNavLink href="/admin/audit" icon="solar:clipboard-list-linear" label="Audit Logs" />
-          <AdminNavLink href="/admin/settings" icon="solar:settings-linear" label="Site Settings" />
+          <AdminNavLink href="/platform/admin" icon="solar:widget-2-linear" label="Overview" />
+          <AdminNavLink href="/platform/admin/users" icon="solar:users-group-rounded-linear" label="Users" />
+          <AdminNavLink href="/platform/admin/rooms" icon="solar:chat-round-dots-linear" label="Rooms" />
+          <AdminNavLink href="/platform/admin/reports" icon="solar:flag-linear" label="Reports" />
+          <AdminNavLink href="/platform/admin/content-filter" icon="solar:shield-warning-linear" label="Word Filter" />
+          <AdminNavLink href="/platform/admin/gifts" icon="solar:gift-linear" label="Gifts" />
+          <AdminNavLink href="/platform/admin/badges" icon="solar:medal-star-linear" label="Badges" />
+          <AdminNavLink href="/platform/admin/addons" icon="solar:blocks-group-solid" label="Addons" />
+          <AdminNavLink href="/platform/admin/audit" icon="solar:clipboard-list-linear" label="Audit Logs" />
+          <AdminNavLink href="/platform/admin/settings" icon="solar:settings-linear" label="Site Settings" />
           <div className="mt-4 border-t border-border/70 pt-4">
-            <AdminNavLink href="/lobby" icon="solar:alt-arrow-left-linear" label="Back to App" />
+            <AdminNavLink href="/chat/lobby" icon="solar:alt-arrow-left-linear" label="Back to App" />
           </div>
         </nav>
       </aside>

@@ -57,7 +57,7 @@ function OnboardingContent() {
   const redirectTarget =
     redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
       ? redirectParam
-      : '/';
+      : '/chat/lobby';
 
   // Auto-fill from current user data
   useEffect(() => {

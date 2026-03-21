@@ -8,7 +8,7 @@ import { CommandPalette } from '@/components/layout/command-palette';
 
 export function ClientLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isOnboarding = pathname === '/onboarding';
+  const isOnboarding = pathname === '/onboarding' || pathname === '/auth/onboarding';
 
   return (
     <div className="bg-background flex h-screen overflow-hidden">

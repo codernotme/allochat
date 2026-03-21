@@ -10,12 +10,12 @@ export default async function Page() {
 
   if (user) {
     if (user.onboardingCompleted === false) {
-      redirect('/onboarding');
+      redirect('/auth/onboarding');
     }
     if (user.role === 'owner') {
-      redirect('/admin');
+      redirect('/platform/admin');
     }
-    redirect('/lobby');
+    redirect('/chat/lobby');
   }
 
   return <HomeContent />;

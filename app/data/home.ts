@@ -17,10 +17,10 @@ export const nav = {
   links: [
     { label: "Features", href: "/#features" },
     { label: "How It Works", href: "/#how-it-works" },
-    { label: "Rooms", href: "/lobby" },
+    { label: "Rooms", href: "/chat/lobby" },
     { label: "About", href: "/about" },
   ],
-  cta: { label: "Start Chatting Free", href: "/sign-up" },
+  cta: { label: "Start Chatting Free", href: "/auth/sign-up" },
 };
 
 export const hero = {
@@ -28,9 +28,9 @@ export const hero = {
   heading: ["Chat. Call. Connect.", "Find your people,", "wherever they are."],
   subheading:
     "AlloChat is your home for real conversations. Jump into rooms built around things you love, hop on a live call, and build friendships that actually last.",
-  primaryCta: { label: "Start Chatting — It's Free", href: "/sign-up" },
-  secondaryCta: { label: "Sign In", href: "/sign-in" },
-  ghostCta: { label: "Explore Rooms →", href: "/lobby" },
+  primaryCta: { label: "Start Chatting — It's Free", href: "/auth/sign-up" },
+  secondaryCta: { label: "Sign In", href: "/auth/sign-in" },
+  ghostCta: { label: "Explore Rooms →", href: "/chat/lobby" },
   stats: [
     { value: "10K+", label: "Active Users" },
     { value: "500+", label: "Chat Rooms" },
@@ -190,8 +190,8 @@ export const footer = {
       heading: "Platform",
       items: [
         { label: "Features", href: "/#features" },
-        { label: "Chat Rooms", href: "/lobby" },
-        { label: "Leaderboard", href: "/lobby" },
+        { label: "Chat Rooms", href: "/chat/lobby" },
+        { label: "Leaderboard", href: "/chat/leaderboard" },
         { label: "Download App", href: "#" },
       ],
     },

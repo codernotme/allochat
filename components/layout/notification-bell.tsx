@@ -86,7 +86,7 @@ export function NotificationBell() {
         
         <div className="p-2">
           <Link 
-            href="/notifications" 
+            href="/chat/notifications" 
             className={cn(buttonVariants({ variant: 'ghost' }), "text-muted-foreground w-full py-2 text-xs italic hover:bg-muted/50")}
           >
             View all notifications

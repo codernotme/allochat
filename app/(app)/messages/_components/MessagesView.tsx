@@ -59,7 +59,7 @@ export function MessagesView() {
             <p className="font-medium">No conversations yet</p>
             <p className="text-muted-foreground text-sm">Find friends in the lobby and start chatting!</p>
             <Link
-              href="/lobby"
+              href="/chat/lobby"
               className={cn(buttonVariants({ variant: 'default', size: 'sm' }), 'mt-2')}
             >
               Browse Lobby
@@ -74,7 +74,7 @@ export function MessagesView() {
               return (
                 <Link
                   key={conv._id}
-                  href={`/messages/${otherId}`}
+                  href={`/chat/messages/${otherId}`}
                   className="flex items-center gap-3 p-4 transition-colors hover:bg-muted/40"
                 >
                   {/* Avatar */}

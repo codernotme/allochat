@@ -56,7 +56,7 @@ export function RoomView({ roomId }: Props) {
           await joinRoom({ roomId });
         } catch {
           toast.error('Unable to join this room right now.');
-          router.replace('/lobby');
+          router.replace('/chat/lobby');
         } finally {
           setAutoJoining(false);
         }
@@ -69,7 +69,7 @@ export function RoomView({ roomId }: Props) {
       }
 
       toast.error('This room is private. Access denied.');
-      router.replace('/lobby');
+      router.replace('/chat/lobby');
     };
 
     hasHandledAccessRef.current = true;

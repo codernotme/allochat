@@ -53,7 +53,7 @@ export function DMConversationView({ userId }: Props) {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="border-border bg-card/50 flex items-center gap-3 border-b px-4 py-3 backdrop-blur">
-        <Link href="/messages" className="hover:bg-muted rounded-lg p-1.5">
+        <Link href="/chat/messages" className="hover:bg-muted rounded-lg p-1.5">
           <Icon icon="solar:alt-arrow-left-linear" className="size-4" />
         </Link>
         <div className="bg-primary/10 flex size-9 items-center justify-center rounded-full">
@@ -77,13 +77,13 @@ export function DMConversationView({ userId }: Props) {
         <div className="ml-auto">
           <div className="flex items-center gap-2">
             <Link
-              href={`/random/call/${userId}`}
+              href={`/chat/random/call/${userId}`}
               className="hover:bg-muted rounded-lg p-1.5 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
             >
               <Icon icon="solar:videocamera-record-linear" className="size-4" />
               Video Call
             </Link>
-            <Link href={`/profile/${userId}`} className="hover:bg-muted rounded-lg p-1.5 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+            <Link href={`/social/profile/${userId}`} className="hover:bg-muted rounded-lg p-1.5 text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
               <Icon icon="solar:user-circle-linear" className="size-4" />
               Profile
             </Link>

@@ -26,7 +26,7 @@ function ForgotPasswordContent() {
   const redirectTarget =
     redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
       ? redirectParam
-      : '/lobby';
+      : '/chat/lobby';
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -54,7 +54,7 @@ function ForgotPasswordContent() {
         <p className="text-muted-foreground text-sm">
           If that email exists, we&apos;ve sent a password reset link. Check your inbox and spam folder.
         </p>
-        <Link href={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-primary text-sm hover:underline">Back to sign in</Link>
+        <Link href={`/auth/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-primary text-sm hover:underline">Back to sign in</Link>
       </div>
     );
   }
@@ -75,7 +75,7 @@ function ForgotPasswordContent() {
           {loading ? 'Sending…' : 'Send Reset Link'}
         </Button>
       </form>
-      <Link href={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-muted-foreground hover:text-foreground text-center text-sm">← Back to sign in</Link>
+      <Link href={`/auth/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-muted-foreground hover:text-foreground text-center text-sm">← Back to sign in</Link>
     </div>
   );
 }

@@ -11,7 +11,7 @@ const SUPPORTED_PROVIDERS = new Set(['google']);
 
 const resolveRedirectTarget = (value: string | null) => {
   if (!value || !value.startsWith('/') || value.startsWith('//')) {
-    return '/lobby';
+    return '/chat/lobby';
   }
   return value;
 };
@@ -40,7 +40,7 @@ function OAuthSignInContent() {
     async function run() {
       if (!provider || !SUPPORTED_PROVIDERS.has(provider)) {
         toast.error('Unsupported OAuth provider.');
-        router.replace(`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`);
+        router.replace(`/auth/sign-in?redirect=${encodeURIComponent(redirectTarget)}`);
         return;
       }
 
@@ -48,7 +48,7 @@ function OAuthSignInContent() {
         await signIn(provider, { redirectTo: redirectTarget });
       } catch {
         toast.error('OAuth sign-in could not start. Check provider env keys and Convex deployment.');
-        router.replace(`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`);
+        router.replace(`/auth/sign-in?redirect=${encodeURIComponent(redirectTarget)}`);
       }
     }
 

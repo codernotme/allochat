@@ -54,7 +54,7 @@ export default function MagicLinkPage() {
           <h2 className="text-2xl font-bold">Check your inbox</h2>
           <p className="text-muted-foreground text-sm">We've sent a magic link to your email.</p>
         </div>
-        <Button onClick={() => router.push('/sign-in')} variant="outline" className="mt-2">
+        <Button onClick={() => router.push('/auth/sign-in')} variant="outline" className="mt-2">
           Return to sign in
         </Button>
       </div>
@@ -88,7 +88,7 @@ export default function MagicLinkPage() {
       </form>
 
       <div className="flex flex-col gap-3 text-center text-sm">
-        <Link href="/sign-in" className="text-muted-foreground hover:text-foreground">
+        <Link href="/auth/sign-in" className="text-muted-foreground hover:text-foreground">
           ← Back to sign in
         </Link>
       </div>

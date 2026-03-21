@@ -6,9 +6,13 @@ import { NextResponse } from 'next/server';
 
 const isAuthPage = createRouteMatcher([
   '/sign-in(.*)',
+  '/auth/sign-in(.*)',
   '/sign-up(.*)',
+  '/auth/sign-up(.*)',
   '/forgot-password(.*)',
+  '/auth/forgot-password(.*)',
   '/reset-password(.*)',
+  '/auth/reset-password(.*)',
 ]);
 
 function getSafeInternalRedirectPath(path: string | null, fallback: string) {
@@ -33,15 +37,25 @@ const isPublicPage = createRouteMatcher([
 
 const isProtectedPage = createRouteMatcher([
   '/lobby(.*)',
+  '/chat/lobby(.*)',
   '/room(.*)',
+  '/chat/room(.*)',
   '/rooms(.*)',
+  '/chat/rooms(.*)',
   '/messages(.*)',
+  '/chat/messages(.*)',
   '/friends(.*)',
+  '/chat/friends(.*)',
   '/notifications(.*)',
+  '/chat/notifications(.*)',
   '/profile(.*)',
+  '/social/profile(.*)',
   '/settings(.*)',
+  '/account/settings(.*)',
   '/admin(.*)',
+  '/platform/admin(.*)',
   '/onboarding(.*)',
+  '/auth/onboarding(.*)',
 ]);
 
 const ANALYTICS_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -97,7 +111,7 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const { pathname, search, searchParams } = new URL(request.url);
 
   if (!isAuthenticated && isProtectedPage(request)) {
-    const redirectUrl = new URL('/sign-in', request.url);
+    const redirectUrl = new URL('/auth/sign-in', request.url);
     redirectUrl.searchParams.set('redirect', `${pathname}${search}`);
     const response = NextResponse.redirect(redirectUrl);
     setAnalyticsCookies(request, response);
@@ -105,7 +119,7 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   }
 
   if (isAuthenticated && isAuthPage(request)) {
-    const targetPath = getSafeInternalRedirectPath(searchParams.get('redirect'), '/lobby');
+    const targetPath = getSafeInternalRedirectPath(searchParams.get('redirect'), '/chat/lobby');
     const response = NextResponse.redirect(new URL(targetPath, request.url));
     setAnalyticsCookies(request, response);
     return response;
@@ -117,7 +131,7 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
     !isProtectedPage(request) &&
     !isAuthPage(request)
   ) {
-    const response = NextResponse.redirect(new URL('/sign-in', request.url));
+    const response = NextResponse.redirect(new URL('/auth/sign-in', request.url));
     setAnalyticsCookies(request, response);
     return response;
   }

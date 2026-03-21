@@ -65,7 +65,7 @@ export function Navbar() {
              isAuthenticated ? (
                <>
                  <Link
-                   href="/lobby"
+                   href="/chat/lobby"
                    className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                  >
                    Go to Lounge
@@ -80,7 +80,7 @@ export function Navbar() {
              ) : (
                <>
                  <Link
-                   href="/sign-in"
+                   href="/auth/sign-in"
                    className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                  >
                    Sign In
@@ -133,7 +133,7 @@ export function Navbar() {
                   isAuthenticated ? (
                     <>
                       <Link 
-                        href="/lobby" 
+                        href="/chat/lobby" 
                         onClick={() => setMenuOpen(false)} 
                         className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                       >
@@ -151,7 +151,7 @@ export function Navbar() {
                     </>
                   ) : (
                     <>
-                      <Link href="/sign-in" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
+                      <Link href="/auth/sign-in" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
                         Sign In
                       </Link>
                       <Link

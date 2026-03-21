@@ -166,7 +166,7 @@ export default function AboutPage() {
         <div className="relative mx-auto max-w-2xl px-6">
           <h2 className="text-4xl font-extrabold tracking-tight mb-5">Join us on the journey</h2>
           <p className="text-muted-foreground mb-8 text-lg">AlloChat is just getting started. Help us build the future of online community.</p>
-          <Link href="/sign-up" className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary px-10 text-base font-bold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/40 active:scale-95">
+          <Link href="/auth/sign-up" className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary px-10 text-base font-bold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/40 active:scale-95">
             Create Your Free Account
             <Icon icon="solar:arrow-right-bold" className="size-4" />
           </Link>

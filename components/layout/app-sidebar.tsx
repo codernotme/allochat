@@ -91,7 +91,7 @@ export function AppSidebar() {
         <button
           onClick={async () => {
             await signOut();
-            router.replace('/sign-in');
+            router.replace('/auth/sign-in');
           }}
           className={cn(
             'text-muted-foreground hover:bg-destructive/10 hover:text-destructive flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors',

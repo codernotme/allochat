@@ -20,7 +20,7 @@ export function LobbyView() {
   // Redirect to onboarding if not completed
   useEffect(() => {
     if (currentUser && currentUser.onboardingCompleted === false) {
-      router.replace('/onboarding');
+      router.replace('/auth/onboarding');
     }
   }, [currentUser, router]);
 
@@ -58,7 +58,7 @@ export function LobbyView() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Link href="/rooms/create" className={cn(buttonVariants({ variant: 'default' }))}>
+        <Link href="/chat/rooms/create" className={cn(buttonVariants({ variant: 'default' }))}>
           + Create Room
         </Link>
       </div>
@@ -127,7 +127,7 @@ export function LobbyView() {
           <div className="flex flex-col items-center gap-2 py-16 text-center">
             <Icon icon="solar:chat-round-dots-linear" className="text-muted-foreground size-10" />
             <p className="text-muted-foreground">No rooms found. Be the first to create one!</p>
-            <Link href="/rooms/create" className={cn(buttonVariants({ variant: 'default' }), "mt-2")}>
+            <Link href="/chat/rooms/create" className={cn(buttonVariants({ variant: 'default' }), "mt-2")}>
               Create Room
             </Link>
           </div>
@@ -149,7 +149,7 @@ export function LobbyView() {
 
 function RoomCard({ room, featured }: { room: any; featured?: boolean }) {
   return (
-    <Link href={`/room/${room._id}`}>
+    <Link href={`/chat/room/${room._id}`}>
       <div className={`border-border hover:border-primary bg-card group flex cursor-pointer flex-col gap-3 rounded-xl border p-4 transition-all hover:shadow-md ${featured ? 'ring-primary/20 ring-1' : ''}`}>
         <div className="flex items-start gap-3">
           <div className="bg-primary/10 flex size-10 shrink-0 items-center justify-center rounded-xl text-xl">

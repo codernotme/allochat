@@ -33,7 +33,7 @@ function SignInEmailContent() {
   const redirectTarget =
     redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
       ? redirectParam
-      : '/lobby';
+      : '/chat/lobby';
 
   const {
     register,
@@ -92,7 +92,7 @@ function SignInEmailContent() {
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
             <Link
-              href={`/forgot-password?redirect=${encodeURIComponent(redirectTarget)}`}
+              href={`/auth/forgot-password?redirect=${encodeURIComponent(redirectTarget)}`}
               className="text-primary text-xs hover:underline"
             >
               Forgot password?
@@ -128,12 +128,12 @@ function SignInEmailContent() {
       </form>
 
       <div className="flex flex-col gap-3 text-center text-sm">
-        <Link href={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-muted-foreground hover:text-foreground">
+        <Link href={`/auth/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-muted-foreground hover:text-foreground">
           ← Other sign in methods
         </Link>
         <p className="text-muted-foreground">
           No account?{' '}
-          <Link href={`/sign-up?redirect=${encodeURIComponent(redirectTarget)}`} className="text-primary font-medium hover:underline">
+          <Link href={`/auth/sign-up?redirect=${encodeURIComponent(redirectTarget)}`} className="text-primary font-medium hover:underline">
             Create one
           </Link>
         </p>

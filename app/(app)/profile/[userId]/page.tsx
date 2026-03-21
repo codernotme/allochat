@@ -43,7 +43,7 @@ export default function UserProfilePage() {
     if (!currentUser) return;
     try {
       // Open DM conversation – navigate to DM page with userId
-      router.push(`/messages/${userId}`);
+      router.push(`/chat/messages/${userId}`);
     } catch {
       toast.error('Could not open conversation');
     }
@@ -68,7 +68,7 @@ export default function UserProfilePage() {
         </div>
         <div className="absolute -bottom-14 right-8 flex gap-2">
           {isOwnProfile ? (
-            <Link href="/settings/profile" className={cn(buttonVariants({ variant: 'default' }))}>
+            <Link href="/account/settings/profile" className={cn(buttonVariants({ variant: 'default' }))}>
               Edit Profile
             </Link>
           ) : (

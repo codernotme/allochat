@@ -265,7 +265,7 @@ export function HomeContent() {
 
           <FadeIn delay={0.4} className="mt-10 text-center">
             <Link
-              href="/sign-up"
+              href="/auth/sign-up"
               data-cursor="hover"
               className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary px-10 text-base font-bold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/40 active:scale-95"
             >
@@ -292,7 +292,7 @@ export function HomeContent() {
             {roomCategories.map((room, i) => (
               <FadeIn key={room.label} delay={i * 0.06}>
                 <Link
-                  href="/lobby"
+                  href="/chat/lobby"
                   data-cursor="hover"
                   className="group flex flex-col gap-4 rounded-2xl border border-border/40 bg-card/50 p-5 transition-all duration-300 hover:border-primary/40 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 active:scale-95"
                 >
@@ -309,7 +309,7 @@ export function HomeContent() {
           </div>
 
           <FadeIn delay={0.3} className="mt-10 text-center">
-            <Link href="/lobby" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline underline-offset-4 decoration-primary/50 transition-colors">
+            <Link href="/chat/lobby" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline underline-offset-4 decoration-primary/50 transition-colors">
               Browse all rooms
               <Icon icon="solar:arrow-right-bold" className="size-4" />
             </Link>
@@ -391,7 +391,7 @@ export function HomeContent() {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link
-                href="/sign-up"
+                href="/auth/sign-up"
                 data-cursor="hover"
                 className="group inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary px-10 text-base font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/40 active:scale-95"
               >

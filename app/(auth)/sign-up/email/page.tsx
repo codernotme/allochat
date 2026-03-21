@@ -81,7 +81,7 @@ function SignUpEmailContent() {
   const redirectTarget =
     redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
       ? redirectParam
-      : '/lobby';
+      : '/chat/lobby';
 
   const generateUsername = useMutation(api.users.generateUniqueUsername);
 
@@ -149,7 +149,7 @@ function SignUpEmailContent() {
       });
 
       router.push(
-        `/verify-email?email=${encodeURIComponent(data.email)}&sent=1&redirect=${encodeURIComponent(redirectTarget)}`
+        `/auth/verify-email?email=${encodeURIComponent(data.email)}&sent=1&redirect=${encodeURIComponent(redirectTarget)}`
       );
     } catch {
       toast.error('Could not create account. Email may already be in use.');
@@ -295,7 +295,7 @@ function SignUpEmailContent() {
 
       <p className="text-muted-foreground text-center text-sm">
         Already have an account?{' '}
-        <Link href={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-primary font-medium hover:underline">
+        <Link href={`/auth/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-primary font-medium hover:underline">
           Sign in
         </Link>
       </p>

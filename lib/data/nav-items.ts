@@ -18,14 +18,14 @@ export const NAV_ITEMS: NavItem[] = [
   {
     id: 'lobby',
     label: 'Lobby',
-    href: '/lobby',
+    href: '/chat/lobby',
     icon: 'solar:home-2-linear',
     section: 'main',
   },
   {
     id: 'messages',
     label: 'Messages',
-    href: '/messages',
+    href: '/chat/messages',
     icon: 'solar:chat-round-dots-linear',
     section: 'main',
     badge: 'messages',
@@ -33,7 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     id: 'notifications',
     label: 'Notifications',
-    href: '/notifications',
+    href: '/chat/notifications',
     icon: 'solar:bell-linear',
     section: 'main',
     badge: 'notifications',
@@ -41,14 +41,14 @@ export const NAV_ITEMS: NavItem[] = [
   {
     id: 'leaderboard',
     label: 'Leaderboard',
-    href: '/leaderboard',
+    href: '/chat/leaderboard',
     icon: 'solar:cup-star-linear',
     section: 'main',
   },
   {
     id: 'random-match',
     label: 'Random Match',
-    href: '/random',
+    href: '/chat/random',
     icon: 'solar:shuffle-linear',
     section: 'main',
   },
@@ -56,7 +56,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     id: 'friends',
     label: 'Friends',
-    href: '/friends',
+    href: '/chat/friends',
     icon: 'solar:users-group-rounded-linear',
     section: 'social',
     badge: 'friends',
@@ -67,7 +67,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     id: 'admin-panel',
     label: 'Admin Panel',
-    href: '/admin',
+    href: '/platform/admin',
     icon: 'solar:shield-keyhole-linear',
     section: 'admin',
     requiredRole: 'admin',

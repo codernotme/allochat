@@ -20,7 +20,7 @@ export function UserMenu() {
   const user = useQuery(api.users.getCurrentUser);
   const { signOut } = useAuthActions();
   const router = useRouter();
-  const profileHref = user?._id ? `/profile/${user._id}` : '/settings/profile';
+  const profileHref = user?._id ? `/social/profile/${user._id}` : '/account/settings/profile';
 
   return (
     <DropdownMenu>
@@ -56,14 +56,14 @@ export function UserMenu() {
         </DropdownMenuItem>
 
         <DropdownMenuItem className="p-0">
-          <Link href="/settings/profile" className="flex w-full items-center gap-2 px-3 py-2">
+          <Link href="/account/settings/profile" className="flex w-full items-center gap-2 px-3 py-2">
             <Icon icon="solar:settings-linear" className="size-4" />
             Settings
           </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem className="p-0">
-          <Link href="/settings/appearance" className="flex w-full items-center gap-2 px-3 py-2">
+          <Link href="/account/settings/appearance" className="flex w-full items-center gap-2 px-3 py-2">
             <Icon icon="solar:pallete-2-linear" className="size-4" />
             Appearance
           </Link>
@@ -71,7 +71,7 @@ export function UserMenu() {
 
         {(user?.role === 'admin' || user?.role === 'owner') && (
           <DropdownMenuItem className="p-0">
-            <Link href="/admin" className="flex w-full items-center gap-2 px-3 py-2 text-primary">
+            <Link href="/platform/admin" className="flex w-full items-center gap-2 px-3 py-2 text-primary">
               <Icon icon="solar:shield-check-linear" className="size-4" />
               Admin Dashboard
             </Link>
@@ -81,7 +81,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem className="p-0">
-          <Link href="/notifications" className="flex w-full items-center gap-2 px-3 py-2">
+          <Link href="/chat/notifications" className="flex w-full items-center gap-2 px-3 py-2">
             <Icon icon="solar:bell-linear" className="size-4" />
             Notifications
           </Link>
@@ -93,7 +93,7 @@ export function UserMenu() {
           className="text-destructive focus:text-destructive flex items-center gap-2 cursor-pointer"
           onClick={async () => {
             await signOut();
-            router.replace('/sign-in');
+            router.replace('/auth/sign-in');
           }}
         >
           <Icon icon="solar:logout-2-linear" className="size-4" />

@@ -22,7 +22,7 @@ function VerifyEmailContent() {
   const redirectTarget =
     redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
       ? redirectParam
-      : '/lobby';
+      : '/chat/lobby';
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -52,7 +52,7 @@ function VerifyEmailContent() {
     setLoading(true);
     try {
       await signIn('resend', { code, email, flow: 'signIn' });
-      router.push(`/onboarding?redirect=${encodeURIComponent(redirectTarget)}`);
+      router.push(`/auth/onboarding?redirect=${encodeURIComponent(redirectTarget)}`);
     } catch {
       toast.error('Invalid or expired code. Please try again.');
       setValue("");
@@ -139,7 +139,7 @@ function VerifyEmailContent() {
             : "Didn't get the code? Resend"}
         </button>
         <button 
-          onClick={() => router.push(`/sign-up/email?redirect=${encodeURIComponent(redirectTarget)}`)}
+          onClick={() => router.push(`/auth/sign-up/email?redirect=${encodeURIComponent(redirectTarget)}`)}
           className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
         >
           Use a different email address

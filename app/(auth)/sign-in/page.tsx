@@ -69,7 +69,7 @@ export default function SignInPage({ searchParams }: SignInPageProps) {
 
       <p className="text-muted-foreground text-center text-sm">
         Don&apos;t have an account?{' '}
-        <Link href="/sign-up" className="text-primary font-medium hover:underline">
+        <Link href="/auth/sign-up" className="text-primary font-medium hover:underline">
           Sign up free
         </Link>
       </p>
