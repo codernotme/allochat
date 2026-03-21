@@ -5,7 +5,22 @@ import { Icon } from '@iconify/react';
 
 export const metadata: Metadata = { title: 'Sign In' };
 
-export default function SignInPage() {
+type SignInPageProps = {
+  searchParams?: {
+    redirect?: string;
+  };
+};
+
+const getRedirectSuffix = (redirect?: string) => {
+  if (!redirect || !redirect.startsWith('/') || redirect.startsWith('//')) {
+    return '';
+  }
+  return `?redirect=${encodeURIComponent(redirect)}`;
+};
+
+export default function SignInPage({ searchParams }: SignInPageProps) {
+  const redirectSuffix = getRedirectSuffix(searchParams?.redirect);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1 text-center">
@@ -15,7 +30,7 @@ export default function SignInPage() {
 
       {/* OAuth Buttons */}
       <div className="flex flex-col gap-3">
-        <Link href="/sign-in/oauth?provider=google" className="border-border bg-input/30 hover:bg-input/50 hover:text-foreground inline-flex h-11 w-full items-center justify-center gap-3 rounded-4xl border px-3 text-sm font-medium transition-colors">
+        <Link href={`/sign-in/oauth?provider=google${redirectSuffix ? `&${redirectSuffix.slice(1)}` : ''}`} className="border-border bg-input/30 hover:bg-input/50 hover:text-foreground inline-flex h-11 w-full items-center justify-center gap-3 rounded-4xl border px-3 text-sm font-medium transition-colors">
             <svg className="size-5" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -46,7 +61,7 @@ export default function SignInPage() {
 
       {/* Email Only */}
       <div className="flex flex-col gap-3">
-        <Link href="/sign-in/email" className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 w-full items-center justify-center gap-2 rounded-4xl px-3 text-sm font-medium transition-colors">
+        <Link href={`/sign-in/email${redirectSuffix}`} className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 w-full items-center justify-center gap-2 rounded-4xl px-3 text-sm font-medium transition-colors">
           <Icon icon="solar:letter-linear" className="size-4" />
           Sign in with Email
         </Link>

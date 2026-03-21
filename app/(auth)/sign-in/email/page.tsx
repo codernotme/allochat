@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useConvex } from 'convex/react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -24,8 +25,15 @@ type FormData = z.infer<typeof schema>;
 export default function SignInEmailPage() {
   const { signIn } = useAuthActions();
   const convex = useConvex();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const redirectParam = searchParams.get('redirect');
+  const redirectTarget =
+    redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+      ? redirectParam
+      : '/lobby';
 
   const {
     register,
@@ -51,7 +59,7 @@ export default function SignInEmailPage() {
       }
 
       await signIn('password', { email, password: data.password, flow: 'signIn' });
-      window.location.assign('/lobby');
+      window.location.assign(redirectTarget);
     } catch (err) {
       toast.error('Invalid email/username or password');
     } finally {
@@ -84,7 +92,7 @@ export default function SignInEmailPage() {
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
             <Link
-              href="/forgot-password"
+              href={`/forgot-password?redirect=${encodeURIComponent(redirectTarget)}`}
               className="text-primary text-xs hover:underline"
             >
               Forgot password?
@@ -120,12 +128,12 @@ export default function SignInEmailPage() {
       </form>
 
       <div className="flex flex-col gap-3 text-center text-sm">
-        <Link href="/sign-in" className="text-muted-foreground hover:text-foreground">
+        <Link href={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-muted-foreground hover:text-foreground">
           ← Other sign in methods
         </Link>
         <p className="text-muted-foreground">
           No account?{' '}
-          <Link href="/sign-up" className="text-primary font-medium hover:underline">
+          <Link href={`/sign-up?redirect=${encodeURIComponent(redirectTarget)}`} className="text-primary font-medium hover:underline">
             Create one
           </Link>
         </p>

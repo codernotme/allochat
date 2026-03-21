@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ const SUGGESTED_ROOMS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const currentUser = useQuery(api.users.getCurrentUser);
   const [step, setStep] = useState<Step>('Profile');
   
@@ -51,6 +52,12 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [hasInit, setHasInit] = useState(false);
+
+  const redirectParam = searchParams.get('redirect');
+  const redirectTarget =
+    redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+      ? redirectParam
+      : '/';
 
   // Auto-fill from current user data
   useEffect(() => {
@@ -121,7 +128,7 @@ export default function OnboardingPage() {
         onboardingCompleted: true,
       });
       toast.success('Welcome to AlloChat!');
-      router.push('/');
+      router.push(redirectTarget);
     } catch (err) {
       toast.error('Something went wrong. Please try again.');
     } finally {

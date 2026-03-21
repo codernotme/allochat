@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -72,9 +72,16 @@ function PasswordStrength({ password }: { password: string }) {
 export default function SignUpEmailPage() {
   const { signIn } = useAuthActions();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const redirectParam = searchParams.get('redirect');
+  const redirectTarget =
+    redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+      ? redirectParam
+      : '/lobby';
 
   const generateUsername = useMutation(api.users.generateUniqueUsername);
 
@@ -141,7 +148,9 @@ export default function SignUpEmailPage() {
         flow: 'signIn',
       });
 
-      router.push(`/verify-email?email=${encodeURIComponent(data.email)}&sent=1`);
+      router.push(
+        `/verify-email?email=${encodeURIComponent(data.email)}&sent=1&redirect=${encodeURIComponent(redirectTarget)}`
+      );
     } catch {
       toast.error('Could not create account. Email may already be in use.');
     } finally {
@@ -286,7 +295,7 @@ export default function SignUpEmailPage() {
 
       <p className="text-muted-foreground text-center text-sm">
         Already have an account?{' '}
-        <Link href="/sign-in" className="text-primary font-medium hover:underline">
+        <Link href={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-primary font-medium hover:underline">
           Sign in
         </Link>
       </p>

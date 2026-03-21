@@ -9,6 +9,13 @@ import { Icon } from '@iconify/react';
 
 const SUPPORTED_PROVIDERS = new Set(['google']);
 
+const resolveRedirectTarget = (value: string | null) => {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) {
+    return '/lobby';
+  }
+  return value;
+};
+
 function OAuthSignInContent() {
   const { signIn } = useAuthActions();
   const searchParams = useSearchParams();
@@ -20,6 +27,10 @@ function OAuthSignInContent() {
     return raw.toLowerCase();
   }, [searchParams]);
 
+  const redirectTarget = useMemo(() => {
+    return resolveRedirectTarget(searchParams.get('redirect'));
+  }, [searchParams]);
+
   useEffect(() => {
     if (hasStartedRef.current) {
       return;
@@ -29,20 +40,20 @@ function OAuthSignInContent() {
     async function run() {
       if (!provider || !SUPPORTED_PROVIDERS.has(provider)) {
         toast.error('Unsupported OAuth provider.');
-        router.replace('/sign-in');
+        router.replace(`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`);
         return;
       }
 
       try {
-        await signIn(provider, { redirectTo: '/lobby' });
+        await signIn(provider, { redirectTo: redirectTarget });
       } catch {
         toast.error('OAuth sign-in could not start. Check provider env keys and Convex deployment.');
-        router.replace('/sign-in');
+        router.replace(`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`);
       }
     }
 
     run();
-  }, [provider, router, signIn]);
+  }, [provider, redirectTarget, router, signIn]);
 
   return (
     <div className="flex min-h-55 items-center justify-center">

@@ -33,6 +33,11 @@ function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const resetCode = searchParams?.get('code') || '';
+  const redirectParam = searchParams?.get('redirect') || '';
+  const redirectTarget =
+    redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+      ? redirectParam
+      : '/lobby';
   
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +58,7 @@ function ResetPasswordForm() {
       // Note: Actual implementation depends on custom reset flow 
       await signIn('password', { resetPasswordCode: data.code, newPassword: data.password, flow: 'reset' });
       toast.success('Password reset successfully!');
-      router.push('/sign-in');
+      router.push(`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`);
     } catch {
       toast.error('Failed to reset password. The link might be expired.');
     } finally {
@@ -122,7 +127,7 @@ function ResetPasswordForm() {
       </form>
 
       <div className="flex flex-col gap-3 text-center text-sm">
-        <Link href="/sign-in" className="text-muted-foreground hover:text-foreground">
+        <Link href={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-muted-foreground hover:text-foreground">
           ← Back to sign in
         </Link>
       </div>
