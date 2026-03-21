@@ -13,6 +13,20 @@ import { MessageActions } from './MessageActions';
 
 const EMOJI_QUICK = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
+const getYouTubeId = (url: string) => {
+  const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  return match ? match[1] : null;
+};
+
+// Simple check for messages that only contain emojis or custom emoticons
+const isOnlyEmojis = (text: string) => {
+  // Check if it's less than 20 chars and doesn't contain regular words
+  // Custom emoticons are wrapped with : or are unicode emojis
+  if (!text || text.length > 30) return false;
+  const stripped = text.replace(/(:[a-zA-Z0-9_]+:|\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/gu, '').trim();
+  return stripped.length === 0;
+};
+
 type Props = { message: any; grouped?: boolean };
 
 export function MessageBubble({ message, grouped }: Props) {
@@ -112,9 +126,13 @@ export function MessageBubble({ message, grouped }: Props) {
         )}
 
         {/* Reply reference */}
-        {message.replyTo && (
-          <div className="border-primary/50 bg-muted/50 mb-1 rounded border-l-2 px-2 py-1 text-xs">
-            Replying to a message
+        {message.replyToMsg && (
+          <div className="border-primary/50 bg-muted/40 mb-1 rounded-r-lg border-l-4 px-3 py-1.5 text-xs text-muted-foreground w-fit max-w-sm flex items-center gap-1.5 cursor-pointer hover:bg-muted/60 transition-colors">
+            <Icon icon="solar:reply-line-duotone" className="size-3" />
+            <span className="font-semibold">{message.replyToMsg.senderName}:</span>
+            <span className="truncate italic">
+               {message.replyToMsg.type === 'media' ? 'Shared media' : message.replyToMsg.content}
+            </span>
           </div>
         )}
 
@@ -125,12 +143,24 @@ export function MessageBubble({ message, grouped }: Props) {
           </div>
         ) : message.type === 'media' ? (
           <div className="mt-1">
-            <img
-              src={message.content}
-              alt="Shared media"
-              className="max-h-80 max-w-full rounded-lg border object-contain"
-              loading="lazy"
-            />
+            {getYouTubeId(message.content) ? (
+              <iframe
+                width="100%"
+                height="auto"
+                className="max-w-md w-full aspect-video rounded-xl border border-border/50 shadow-sm"
+                src={`https://www.youtube.com/embed/${getYouTubeId(message.content)}`}
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <img
+                src={message.content}
+                alt="Shared media"
+                className="max-h-80 max-w-full rounded-xl border border-border/50 object-contain shadow-sm"
+                loading="lazy"
+              />
+            )}
           </div>
         ) : message.type === 'sketch' ? (
           <div className="mt-1 flex justify-center bg-white rounded-lg p-1 border">
@@ -160,9 +190,19 @@ export function MessageBubble({ message, grouped }: Props) {
             </div>
           </div>
         ) : (
-          <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">
-            <EmoticonText content={message.content} />
-          </p>
+          <div className="relative group/content max-w-[85%]">
+             <p className={cn(
+               "leading-relaxed whitespace-pre-wrap break-words",
+               isOnlyEmojis(message.content) ? "text-5xl" : "text-sm"
+             )}>
+               <EmoticonText content={message.content} largeEmoticons={isOnlyEmojis(message.content)} />
+             </p>
+             {grouped && (
+               <div className="text-[10px] text-muted-foreground/0 group-hover/content:text-muted-foreground/60 transition-opacity absolute -left-12 bottom-0 select-none pointer-events-none text-right w-10">
+                 {time}
+               </div>
+             )}
+          </div>
         )}
 
         {/* System message */}

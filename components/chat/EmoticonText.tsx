@@ -1,14 +1,16 @@
 import { Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { EMOTICON_MAP, findEmoticons } from '@/lib/data/emoticons';
+import { cn } from '@/lib/utils';
 
 type Props = {
   content: string;
   className?: string;
+  largeEmoticons?: boolean;
 };
 
-export function EmoticonText({ content, className }: Props) {
-  const markdownRegex = /(\*\*[^*]+\*\*|~~[^~]+~~|\*[^*]+\*|`[^`]+`)/g;
+export function EmoticonText({ content, className, largeEmoticons }: Props) {
+  const markdownRegex = /(\*\*[^*]+\*\*|~~[^~]+~~|\*[^*]+\*|`[^`]+`|@\w+)/g;
   const output: Array<ReactNode> = [];
   let cursor = 0;
   let partIndex = 0;
@@ -37,7 +39,7 @@ export function EmoticonText({ content, className }: Props) {
             src={src}
             alt={match.token}
             title={match.token}
-            className="mx-0.5 inline-block size-5 align-text-bottom"
+            className={cn("mx-0.5 inline-block align-text-bottom", largeEmoticons ? "size-10" : "size-5")}
             loading="lazy"
           />
         );
@@ -74,6 +76,8 @@ export function EmoticonText({ content, className }: Props) {
     } else if (token.startsWith('`') && token.endsWith('`')) {
       const inner = token.slice(1, -1);
       output.push(<code key={`code-${partIndex}`}>{inner}</code>);
+    } else if (token.startsWith('@')) {
+      output.push(<span key={`mention-${partIndex}`} className="text-primary font-bold bg-primary/10 px-1 rounded mx-0.5">{token}</span>);
     } else {
       output.push(...renderEmoticons(token, `raw-${partIndex}`));
     }

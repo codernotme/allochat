@@ -319,6 +319,12 @@ export default defineSchema({
     .index('byParticipant', ['participantIds'])
     .index('byRoom', ['roomId', 'status']),
 
+  matchmakingQueue: defineTable({
+    userId: v.id('users'),
+    type: v.union(v.literal('video'), v.literal('audio'), v.literal('text')),
+    joinedAt: v.number(),
+  }).index('byUser', ['userId']).index('byTypeAndTime', ['type', 'joinedAt']),
+
   webrtcCalls: defineTable({
     participantKey: v.string(),
     callerId: v.id('users'),

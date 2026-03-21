@@ -32,6 +32,9 @@ export const listMessages = query({
       )
       .paginate(args.paginationOpts);
 
+    const room = await ctx.db.get(args.roomId);
+    const isRandom = room?.category === 'random';
+
     const resultsWithUsers = await Promise.all(
       page.page.map(async (msg) => {
         const user = await ctx.db.get(msg.senderId);
@@ -50,13 +53,30 @@ export const listMessages = query({
           }
         }
 
+        let replyToMsg = null;
+        if (msg.replyTo) {
+          const replied = await ctx.db.get(msg.replyTo);
+          if (replied) {
+            const repliedUser = await ctx.db.get(replied.senderId);
+            replyToMsg = {
+               _id: replied._id,
+               content: replied.isDeleted ? '[Message deleted]' : replied.content,
+               type: replied.type,
+               senderName: isRandom ? 'Stranger' : (repliedUser?.displayName || repliedUser?.username || 'Unknown')
+            };
+          }
+        }
+
+        const isSelf = user?._id === userId;
+
         return {
           ...msg,
           content: resolvedContent,
+          replyToMsg,
           sender: user ? {
-            name: user.displayName || user.username,
-            image: user.avatar ? await ctx.storage.getUrl(user.avatar as any) : null,
-            level: user.level || 1,
+            name: (isRandom && !isSelf) ? 'Stranger' : (user.displayName || user.username),
+            image: (isRandom && !isSelf) ? null : (user.avatar ? await ctx.storage.getUrl(user.avatar as any) : null),
+            level: (isRandom && !isSelf) ? undefined : (user.level || 1),
           } : null,
         };
       })

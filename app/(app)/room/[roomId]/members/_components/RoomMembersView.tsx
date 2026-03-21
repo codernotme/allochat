@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 type Props = { roomId: Id<'rooms'> };
 
@@ -50,12 +51,20 @@ export function RoomMembersView({ roomId }: Props) {
   const isOwnerOrAdmin =
     currentUser?._id === room?.ownerId || currentUser?.role === 'admin' || currentUser?.role === 'owner';
 
+  const isRandom = room?.category === 'random';
+
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(timer);
   }, []);
 
   if (members === undefined) return <div className="p-8 text-center">Loading members...</div>;
+
+  const ROLE_ORDER: Record<string, number> = { owner: 0, admin: 1, moderator: 2, member: 3 };
+  const sortedMembers = [...members].sort((a, b) => {
+    if (a.role !== b.role) return ROLE_ORDER[a.role] - ROLE_ORDER[b.role];
+    return (a.user?.name || '').localeCompare(b.user?.name || '');
+  });
 
   return (
     <>
@@ -79,39 +88,55 @@ export function RoomMembersView({ roomId }: Props) {
           )}
 
           <div className="divide-border divide-y">
-            {members.map((m) => (
-              <button
-                key={m._id}
-                type="button"
-                className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-3 text-left"
-                onClick={() => setSelectedMember(m)}
-              >
-                <div className="relative">
-                  <Avatar className="size-10 border border-border/50">
-                    <AvatarImage src={m.user?.image ?? undefined} />
-                    <AvatarFallback className="bg-primary/10">
-                      <Icon icon="solar:user-circle-linear" className="size-5 text-primary" />
-                    </AvatarFallback>
-                  </Avatar>
-                  {m.user?.isOnline && (
-                    <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-background bg-green-500" />
-                  )}
-                </div>
+            {sortedMembers.map((m) => {
+              const isSelf = m.userId === currentUser?._id;
+              const shouldMask = isRandom && !isSelf;
+              const displayName = shouldMask ? 'Stranger' : (m.user?.name || `User ${m.userId.slice(-6)}`);
+              const displayAvatar = shouldMask ? undefined : (m.user?.image ?? undefined);
+              const displayLevel = shouldMask ? '?' : (m.user?.level || 1);
 
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold">{m.user?.name || `User ${m.userId.slice(-6)}`}</p>
-                    {m.role !== 'member' && (
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_COLORS[m.role] || ''}`}>{m.role}</span>
+              return (
+                <button
+                  key={m._id}
+                  type="button"
+                  className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors"
+                  onClick={() => setSelectedMember(m)}
+                >
+                  <div className="relative">
+                    <Avatar className={cn("size-10 border", m.role === 'owner' && !shouldMask ? "border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" : "border-border/50")}>
+                      <AvatarImage src={displayAvatar} />
+                      <AvatarFallback className={cn("bg-primary/10", shouldMask && "bg-muted")}>
+                        <Icon icon={shouldMask ? "solar:incognito-bold-duotone" : "solar:user-circle-linear"} className={cn("size-5 text-primary", shouldMask && "text-muted-foreground")} />
+                      </AvatarFallback>
+                    </Avatar>
+                    {m.role === 'owner' && !shouldMask && (
+                      <div className="absolute -top-3 -right-2 transform rotate-12 text-xl drop-shadow-md z-10" title="Room Owner">👑</div>
                     )}
-                    {m.mutedUntil && m.mutedUntil > now && (
-                      <Badge variant="secondary" className="text-xs">Muted</Badge>
+                    {m.user?.isOnline && !shouldMask && (
+                      <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-background bg-green-500" />
                     )}
                   </div>
-                  <p className="text-muted-foreground text-xs">Lv. {m.user?.level || 1} - Joined {new Date(m.joinedAt).toLocaleDateString()}</p>
-                </div>
-              </button>
-            ))}
+
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className={cn(
+                        "text-sm", 
+                        m.role === 'owner' && !shouldMask ? "font-black bg-gradient-to-r from-orange-500 via-red-500 to-yellow-500 text-transparent bg-clip-text" : "font-semibold"
+                      )}>
+                        {displayName}
+                      </p>
+                      {m.role !== 'member' && !shouldMask && (
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_COLORS[m.role] || ''}`}>{m.role}</span>
+                      )}
+                      {m.mutedUntil && m.mutedUntil > now && (
+                        <Badge variant="secondary" className="text-xs">Muted</Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground text-xs">Lv. {displayLevel} {shouldMask ? '' : `- Joined ${new Date(m.joinedAt).toLocaleDateString()}`}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

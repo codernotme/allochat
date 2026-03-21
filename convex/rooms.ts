@@ -237,6 +237,19 @@ export const joinRoom = mutation({
       isBanned: false,
     });
 
+    // Send a system welcome message
+    const displayName = user?.displayName || user?.username || 'A new user';
+    await ctx.db.insert('messages', {
+      roomId: args.roomId,
+      senderId: userId,
+      content: `👋 **${displayName}** just slid into the room. Say hi!`,
+      type: 'system',
+      isPinned: false,
+      isDeleted: false,
+      reactions: [],
+      createdAt: now + 1,
+    });
+
     // Update member count
     await ctx.db.patch(args.roomId, {
       memberCount: room.memberCount + 1,

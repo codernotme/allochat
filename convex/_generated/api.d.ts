@@ -17,6 +17,7 @@ import type * as crons from "../crons.js";
 import type * as files from "../files.js";
 import type * as gamification from "../gamification.js";
 import type * as http from "../http.js";
+import type * as matchmaking from "../matchmaking.js";
 import type * as messages from "../messages.js";
 import type * as minigames from "../minigames.js";
 import type * as moderation from "../moderation.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   gamification: typeof gamification;
   http: typeof http;
+  matchmaking: typeof matchmaking;
   messages: typeof messages;
   minigames: typeof minigames;
   moderation: typeof moderation;

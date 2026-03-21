@@ -56,6 +56,9 @@ export default function RootLayout({
             </Suspense>
             {children}
             <Toaster richColors position="bottom-right" />
+            <div className="fixed bottom-2 right-4 z-[9999] pointer-events-none text-[11px] font-bold uppercase tracking-widest text-muted-foreground/40 select-none mix-blend-difference">
+              allochat by codernotme
+            </div>
           </ThemeProvider>
         </ConvexClientProvider>
       </body>

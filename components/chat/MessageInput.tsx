@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -23,6 +23,17 @@ export function MessageInput({ roomId }: Props) {
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [showGifDialog, setShowGifDialog] = useState(false);
   const [mediaMenuOpen, setMediaMenuOpen] = useState(false);
+  const [replyTo, setReplyTo] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      setReplyTo(e.detail);
+      // Give time for state to update, then focus
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    };
+    window.addEventListener('reply-to', handler);
+    return () => window.removeEventListener('reply-to', handler);
+  }, []);
 
   const sendMessage = useMutation(api.messages.sendMessage);
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
@@ -40,8 +51,9 @@ export function MessageInput({ roomId }: Props) {
 
     setSending(true);
     try {
-      await sendMessage({ roomId, content: text, type: isMediaUrl ? 'media' : 'text' });
+      await sendMessage({ roomId, content: text, type: isMediaUrl ? 'media' : 'text', replyTo: replyTo?._id });
       setContent('');
+      setReplyTo(null);
       textareaRef.current?.focus();
       toast.success('Message sent!');
     } catch (err: unknown) {
@@ -149,12 +161,27 @@ export function MessageInput({ roomId }: Props) {
 
       <GifSearchDialog open={showGifDialog} onOpenChange={setShowGifDialog} onSelectGif={async (gifUrl) => {
         try {
-          await sendMessage({ roomId, content: gifUrl, type: 'media' });
+          await sendMessage({ roomId, content: gifUrl, type: 'media', replyTo: replyTo?._id });
+          setReplyTo(null);
           toast.success('GIF sent!');
         } catch {
           toast.error('Failed to send GIF');
         }
       }} />
+
+      {replyTo && (
+        <div className="flex items-center justify-between border-border bg-muted/40 border px-3 py-2 text-sm rounded-lg mb-2 relative mx-2">
+          <div className="absolute -left-2 top-1/2 w-1.5 h-6 bg-primary rounded-r-full -translate-y-1/2" />
+          <div className="flex items-center gap-2 overflow-hidden text-muted-foreground pl-1 max-w-[90%]">
+            <Icon icon="solar:reply-line-duotone" className="size-4 shrink-0 text-primary" />
+            <span className="font-semibold text-foreground whitespace-nowrap">{replyTo.sender?.name || 'Someone'}</span>
+            <span className="truncate opacity-80">{replyTo.type === 'media' ? 'Shared media' : replyTo.content}</span>
+          </div>
+          <Button variant="ghost" size="sm" className="size-6 rounded-full p-0 shrink-0 hover:bg-muted" onClick={() => setReplyTo(null)}>
+            <Icon icon="solar:close-circle-bold" className="size-4" />
+          </Button>
+        </div>
+      )}
 
       <div className="flex w-full items-end gap-2">
         {/* Media Menu Button */}
@@ -182,8 +209,8 @@ export function MessageInput({ roomId }: Props) {
                   setMediaMenuOpen(false);
                 }}
               >
-                <Icon icon="solar:gif-linear" className="size-5" />
-                <span className="text-xs">GIF/Sticker</span>
+                <Icon icon="solar:clapperboard-play-linear" className="size-5" />
+                <span className="text-xs">GIF / YouTube</span>
               </Button>
 
               <Button
