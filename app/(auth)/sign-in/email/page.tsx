@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useConvex } from 'convex/react';
 import Link from 'next/link';
@@ -22,7 +22,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export default function SignInEmailPage() {
+function SignInEmailContent() {
   const { signIn } = useAuthActions();
   const convex = useConvex();
   const searchParams = useSearchParams();
@@ -139,5 +139,19 @@ export default function SignInEmailPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignInEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-55 items-center justify-center">
+          <Icon icon="lucide:loader-2" className="size-4 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <SignInEmailContent />
+    </Suspense>
   );
 }

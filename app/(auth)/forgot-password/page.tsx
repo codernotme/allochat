@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -16,7 +16,7 @@ import { Icon } from '@iconify/react';
 const schema = z.object({ email: z.string().email('Invalid email address') });
 type FormData = z.infer<typeof schema>;
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
   const { signIn } = useAuthActions();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -77,5 +77,19 @@ export default function ForgotPasswordPage() {
       </form>
       <Link href={`/sign-in?redirect=${encodeURIComponent(redirectTarget)}`} className="text-muted-foreground hover:text-foreground text-center text-sm">← Back to sign in</Link>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-55 items-center justify-center">
+          <Icon icon="lucide:loader-2" className="size-4 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <ForgotPasswordContent />
+    </Suspense>
   );
 }

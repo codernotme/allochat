@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -26,7 +26,7 @@ const SUGGESTED_ROOMS = [
   { label: 'Language', icon: 'solar:global-linear' },
 ] as const;
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentUser = useQuery(api.users.getCurrentUser);
@@ -388,5 +388,19 @@ export default function OnboardingPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-55 items-center justify-center">
+          <Icon icon="lucide:loader-2" className="size-4 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <OnboardingContent />
+    </Suspense>
   );
 }

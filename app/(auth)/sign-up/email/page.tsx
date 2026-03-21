@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -69,7 +69,7 @@ function PasswordStrength({ password }: { password: string }) {
   );
 }
 
-export default function SignUpEmailPage() {
+function SignUpEmailContent() {
   const { signIn } = useAuthActions();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -300,5 +300,19 @@ export default function SignUpEmailPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function SignUpEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-55 items-center justify-center">
+          <Icon icon="lucide:loader-2" className="size-4 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <SignUpEmailContent />
+    </Suspense>
   );
 }
