@@ -9,8 +9,14 @@ const isAuthPage = createRouteMatcher([
   '/sign-up(.*)',
   '/forgot-password(.*)',
   '/reset-password(.*)',
-  '/verify-email(.*)',
 ]);
+
+function getSafeInternalRedirectPath(path: string | null, fallback: string) {
+  if (!path || !path.startsWith('/') || path.startsWith('//')) {
+    return fallback;
+  }
+  return path;
+}
 
 const isPublicPage = createRouteMatcher([
   '/',
@@ -88,7 +94,7 @@ function setAnalyticsCookies(request: Request, response: NextResponse) {
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const isAuthenticated = await convexAuth.isAuthenticated();
-  const { pathname, search } = new URL(request.url);
+  const { pathname, search, searchParams } = new URL(request.url);
 
   if (!isAuthenticated && isProtectedPage(request)) {
     const redirectUrl = new URL('/sign-in', request.url);
@@ -99,7 +105,8 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   }
 
   if (isAuthenticated && isAuthPage(request)) {
-    const response = NextResponse.redirect(new URL('/lobby', request.url));
+    const targetPath = getSafeInternalRedirectPath(searchParams.get('redirect'), '/lobby');
+    const response = NextResponse.redirect(new URL(targetPath, request.url));
     setAnalyticsCookies(request, response);
     return response;
   }
