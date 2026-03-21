@@ -34,17 +34,20 @@ export const metadata: Metadata = {
   },
 };
 
+import { ConvexAuthNextjsServerProvider } from '@convex-dev/auth/nextjs/server';
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={cn('antialiased', fontMono.variable, 'font-sans', figtree.variable)}
-    >
+    <ConvexAuthNextjsServerProvider>
+      <html
+        lang="en"
+        suppressHydrationWarning
+        className={cn('antialiased', fontMono.variable, 'font-sans', figtree.variable)}
+      >
       <body>
         <ConvexClientProvider>
           <ThemeProvider>
@@ -57,5 +60,6 @@ export default function RootLayout({
         </ConvexClientProvider>
       </body>
     </html>
+    </ConvexAuthNextjsServerProvider>
   );
 }

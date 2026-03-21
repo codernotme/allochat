@@ -44,11 +44,12 @@ function SignInEmailContent() {
   async function onSubmit(data: FormData) {
     setLoading(true);
     try {
-      let email = data.identifier.trim();
+      let identifier = data.identifier.trim();
+      let email = identifier;
       
       // If it looks like a username (no @), resolve it to an email
-      if (!email.includes('@')) {
-        const user = await convex.query(api.users.getUserByUsername, { username: email });
+      if (!identifier.includes('@')) {
+        const user = await convex.query(api.users.getUserByUsername, { username: identifier.toLowerCase() });
         if (user && user.email) {
           email = user.email;
         } else {

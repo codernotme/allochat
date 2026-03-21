@@ -6,9 +6,9 @@ import { Icon } from '@iconify/react';
 export const metadata: Metadata = { title: 'Sign In' };
 
 type SignInPageProps = {
-  searchParams?: {
+  searchParams: Promise<{
     redirect?: string;
-  };
+  }>;
 };
 
 const getRedirectSuffix = (redirect?: string) => {
@@ -18,8 +18,9 @@ const getRedirectSuffix = (redirect?: string) => {
   return `?redirect=${encodeURIComponent(redirect)}`;
 };
 
-export default function SignInPage({ searchParams }: SignInPageProps) {
-  const redirectSuffix = getRedirectSuffix(searchParams?.redirect);
+export default async function SignInPage({ searchParams }: SignInPageProps) {
+  const { redirect } = await searchParams;
+  const redirectSuffix = getRedirectSuffix(redirect);
 
   return (
     <div className="flex flex-col gap-6">

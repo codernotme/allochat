@@ -43,7 +43,7 @@ export const getUserByUsername = query({
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query('users')
-      .withIndex('byUsername', (q) => q.eq('username', args.username))
+      .withIndex('byUsername', (q) => q.eq('username', args.username.toLowerCase()))
       .unique();
     if (user?.avatar) {
       return {
