@@ -104,7 +104,12 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
     return response;
   }
 
-  if (!isAuthenticated && !isPublicPage(request) && !isProtectedPage(request)) {
+  if (
+    !isAuthenticated &&
+    !isPublicPage(request) &&
+    !isProtectedPage(request) &&
+    !isAuthPage(request)
+  ) {
     const response = NextResponse.redirect(new URL('/sign-in', request.url));
     setAnalyticsCookies(request, response);
     return response;
